@@ -1,122 +1,86 @@
 #include "Player.h"
 #include "Others.h"
+#include "LTimer.h"
 #include <math.h>
+#include <sstream>
+#include <SDL_ttf.h>
 
-Player::Player(const int& x, const int& y)
+Player::Player(SDL_Renderer* gRenderer)
 {
-    //Initialize the offsets
-    mPosX = x;
-    mPosY = y;
+    renderer = gRenderer;
 
-    //Set collision box dimension
+    mPos.x = SCREEN_WIDTH / 2;
+    mPos.y = SCREEN_HEIGHT / 2;
+
     mCollider.w = PLAYER_WIDTH;
     mCollider.h = PLAYER_HEIGHT;
 
-    //Initialize the velocity
     mVelX = 0;
     mVelY = 0;
 }
 
-double pytago(int a, int b)
+void Player::updateVel(const int& x, const int& y)
 {
-    double c = sqrt(a * a + b * b);
-    return c;
+    mVelX = PLAYER_VEL * (x * 1.0) / pytago(x, y);
+    mVelY = PLAYER_VEL * (y * 1.0) / pytago(x, y);
 }
 
 void Player::handleEvent(SDL_Event& e)
 {
-    if (e.type == SDL_MOUSEBUTTONDOWN)
+    if (e.type == SDL_MOUSEBUTTONDOWN && !isHold)
     {
-        int xt1, yt1;
-        SDL_GetMouseState(&xt1, &yt1);
-        if (0 < xt1 - mPosX && xt1 - mPosX < PLAYER_WIDTH && 0 < yt1 - mPosY && yt1 - mPosY < PLAYER_HEIGHT)
+        SDL_GetMouseState(&initPos.x, &initPos.y);
+        if (0 < initPos.x - mPos.x && initPos.x - mPos.x < PLAYER_WIDTH && 0 < initPos.y - mPos.y && initPos.y - mPos.y < PLAYER_HEIGHT)
         {
-            int xt2, yt2;
-            while (true) {
-                SDL_Delay(10);
-                SDL_PollEvent(&e);
-
-                if (e.type == SDL_MOUSEBUTTONUP) {
-                    SDL_GetMouseState(&xt2, &yt2);
-                    break;
-                }
-            }
-
-            mVelX = PLAYER_VEL * (xt1 - xt2) * 1.0 / pytago((xt1 - xt2), (yt1 - yt2));
-            mVelY = PLAYER_VEL * (yt1 - yt2) * 1.0 / pytago((xt1 - xt2), (yt1 - yt2));
-            remainVel = 10;
-
-            std::cout << "x = " << mPosX << ", y = " << mPosY << std::endl;
+            mTime.start();
+            isHold = true;
         }
+    }
+    else if (e.type == SDL_MOUSEBUTTONUP && isHold) {
+        isHold = false;
+        SDL_GetMouseState(&lastPos.x, &lastPos.y);
+        updateVel((initPos.x - lastPos.x), (initPos.y - lastPos.y));
+
+        std::cout << "Final remainVel " << mForce << std::endl;
+    }
+}
+
+void Player::move()
+{
+    if (isHold)
+    {
+        mForce = (mTime.getTicks() / 10) % 100;
+    }
+    else if (mForce > 0)
+    {
+        mPos.x += mVelX;
+        mCollider.x = mPos.x;
+        if ((mPos.x < 0) || (mPos.x + PLAYER_WIDTH > SCREEN_WIDTH))
+        {
+            mVelX = -mVelX;
+            mForce += PLAYER_VEL / 10;
+        }
+
+        mPos.y += mVelY;
+        mCollider.y = mPos.y;
+        if ((mPos.y < 0) || (mPos.y + PLAYER_HEIGHT > SCREEN_HEIGHT))
+        {
+            mVelY = -mVelY;
+            mForce += PLAYER_VEL / 10;
+        }
+
+        mForce -= PLAYER_VEL / 10;
     }
     else
     {
-        if (remainVel > 0)
-        {
-            remainVel--;
-            std::cout << "remainVel = " << remainVel << std::endl;
-        }
-        else
-        {
-            mVelX = 0;
-            mVelY = 0;
-        }
-    }
-
-    //If a key was pressed
-    if (e.type == SDL_KEYDOWN && e.key.repeat == 0)
-    {
-        //Adjust the velocity
-        switch (e.key.keysym.sym)
-        {
-        case SDLK_UP: mVelY -= PLAYER_VEL; break;
-        case SDLK_DOWN: mVelY += PLAYER_VEL; break;
-        case SDLK_LEFT: mVelX -= PLAYER_VEL; break;
-        case SDLK_RIGHT: mVelX += PLAYER_VEL; break;
-        }
-    }
-    //If a key was released
-    else if (e.type == SDL_KEYUP && e.key.repeat == 0)
-    {
-        //Adjust the velocity
-        switch (e.key.keysym.sym)
-        {
-        case SDLK_UP: mVelY += PLAYER_VEL; break;
-        case SDLK_DOWN: mVelY -= PLAYER_VEL; break;
-        case SDLK_LEFT: mVelX += PLAYER_VEL; break;
-        case SDLK_RIGHT: mVelX -= PLAYER_VEL; break;
-        }
+        mForce = 0;
+        mVelX = 0;
+        mVelY = 0;
     }
 }
 
-void Player::move(SDL_Rect& wall)
+void Player::render(LTexture& gDotTexture)
 {
-    //Move the dot left or right
-    mPosX += mVelX;
-    mCollider.x = mPosX;
-
-    //If the dot went too far to the left or right
-    if ((mPosX < 0) || (mPosX + PLAYER_WIDTH > SCREEN_WIDTH))
-    {
-        //Change direction
-        mVelX *= -1;
-    }
-
-    //Move the dot up or down
-    mPosY += mVelY;
-    mCollider.y = mPosY;
-
-    //If the dot went too far up or down
-    if ((mPosY < 0) || (mPosY + PLAYER_HEIGHT > SCREEN_HEIGHT))
-    {
-        //Change direction
-        mVelY *= -1;
-    }
-}
-
-void Player::render(SDL_Renderer* gRenderer, LTexture& gDotTexture)
-{
-    //Show the dot
-    gDotTexture.render(gRenderer, mPosX, mPosY);
+    gDotTexture.render(renderer, mPos.x, mPos.y);
 }
 

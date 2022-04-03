@@ -1,36 +1,34 @@
 #include "Enemy.h"
-
-#include "Others.h"
 #include "Player.h"
 
 Enemy::Enemy()
 {
-    //Initialize the offsets
-    mCollider.x = mPosX = rand() % SCREEN_WIDTH;
-    mCollider.y = mPosY = rand() % SCREEN_HEIGHT;
-
-    //Set collision box dimension
     mCollider.w = PLAYER_WIDTH;
     mCollider.h = PLAYER_HEIGHT;
 
-    //Initialize the velocity
+    spawn();
+
     //mVelX = 0;
     //mVelY = 0;
 }
 
-void Enemy::response(SDL_Rect playerCollider, SDL_Rect wall)
+void Enemy::spawn()
 {
-    if ((mPosX < 0) || (mPosX + PLAYER_WIDTH > SCREEN_WIDTH) || checkCollision(mCollider, playerCollider) || checkCollision(mCollider, wall))
+    mCollider.x = mPos.x = rand() % (SCREEN_WIDTH - PLAYER_WIDTH);
+    mCollider.y = mPos.y = rand() % (SCREEN_HEIGHT - PLAYER_HEIGHT);
+}
+
+void Enemy::response(SDL_Rect playerCollider)
+{
+    if ((mPos.x < 0) || (mPos.x + PLAYER_WIDTH > SCREEN_WIDTH) || checkCollision(mCollider, playerCollider))
     {
         std::cout << "Enemy killed!" << std::endl;
-        mCollider.x = mPosX = rand() % SCREEN_WIDTH;
-        mCollider.y = mPosY = rand() % SCREEN_HEIGHT;
+        spawn();
     }
 }
 
 void Enemy::render(SDL_Renderer* gRenderer, LTexture& gDotTexture)
 {
-    //Show the dot
-    gDotTexture.render(gRenderer, mPosX, mPosY);
+    gDotTexture.render(gRenderer, mPos.x, mPos.y);
 }
 

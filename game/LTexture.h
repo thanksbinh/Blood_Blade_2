@@ -4,6 +4,7 @@
 
 #include <SDL.h>
 #include <SDL_image.h>
+#include <SDL_ttf.h>
 #include <stdio.h>
 #include <string>
 
@@ -20,6 +21,9 @@ public:
 
 	//Loads image at specified path
 	bool loadFromFile(SDL_Renderer* gRenderer, std::string path, int _mWidth, int _mHeight);
+
+	//Creates image from font string
+	bool loadFromRenderedText(SDL_Renderer* gRenderer, TTF_Font* gFont, std::string textureText, SDL_Color textColor);
 
 	//Deallocates texture
 	void free();

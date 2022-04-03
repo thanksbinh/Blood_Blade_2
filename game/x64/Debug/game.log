@@ -1,2 +1,4 @@
-﻿  main.cpp
+﻿  Player.cpp
+C:\Users\binh1\Desktop\Blood_Blade_2\game\Player.cpp(24,36): warning C4244: '=': conversion from 'double' to 'int', possible loss of data
+C:\Users\binh1\Desktop\Blood_Blade_2\game\Player.cpp(25,36): warning C4244: '=': conversion from 'double' to 'int', possible loss of data
   game.vcxproj -> C:\Users\binh1\Desktop\Blood_Blade_2\game\x64\Debug\game.exe

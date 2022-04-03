@@ -9,41 +9,49 @@
 
 #include "Game.h"
 #include "LTexture.h"
+#include "LTimer.h"
+#include "Others.h"
 
 class Player
 {
 public:
-	//Maximum axis velocity of the dot
-	static const int PLAYER_VEL = 10;
+	static const int PLAYER_VEL = 20;
 
-	//Initializes the variables
-	Player(const int& x, const int& y);
+	Player(SDL_Renderer* gRenderer);
 
-	//Takes key presses and adjusts the dot's velocity
 	void handleEvent(SDL_Event& e);
 
-	//Moves the dot and checks collision
-	void move(SDL_Rect& wall);
+	void move();
 
-	//Shows the dot on the screen
-	void render(SDL_Renderer* gRenderer, LTexture& gDotTexture);
+	void updateVel(const int& x, const int& y);
 
-	SDL_Rect getCollider()
-	{
-		return mCollider;
-	}
+	void render(LTexture& gDotTexture);
+
+	Point getPos() { return mPos; }
+
+	SDL_Rect getCollider() { return mCollider; }
+
+	int getForce() { return mForce; }
 
 private:
-	//The X and Y offsets of the dot
-	int mPosX, mPosY;
+	SDL_Renderer* renderer;
 
-	//The velocity of the dot
+	//Player position
+	Point mPos;
+
+	//Player velocity
 	int mVelX, mVelY;
 
-	//Remaining velocity
-	int remainVel = 0;
+	//Mouse stuff
+	Point initPos;
+	Point lastPos;
+	bool isHold = false;
+	LTimer mTime;
 
-	//Dot's collision box
+	//Remaining force
+	int mForce = 0;
+
+	//Collision box
 	SDL_Rect mCollider;
 };
 

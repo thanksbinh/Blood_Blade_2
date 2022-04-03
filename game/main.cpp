@@ -3,97 +3,111 @@
 #include <SDL_ttf.h>
 #include <stdio.h>
 #include <string>
+#include <sstream>
 
 #include "LTexture.h"
 #include "Game.h"
 #include "Others.h"
 #include "Player.h"
 #include "Enemy.h"
+#include "LTimer.h"
 
 SDL_Window* gWindow = NULL;
-
 SDL_Renderer* gRenderer = NULL;
+TTF_Font* gFont = NULL;
 
 LTexture gPlayerTexture;
-
 LTexture gEnemyTexture;
-
 LTexture gBGTexture;
+LTexture gTimeTextTexture;
+LTexture gPromptTextTexture;
 
 bool init();
-
 bool loadMedia();
-
 void close();
 
 int main(int argc, char* args[])
 {
-	//Start up SDL and create window
 	if (!init())
 	{
 		printf("Failed to initialize!\n");
 	}
 	else
 	{
-		//Load media
 		if (!loadMedia())
 		{
 			printf("Failed to load media!\n");
 		}
 		else
 		{
-			//Main loop flag
 			bool quit = false;
 
-			//Event handler
 			SDL_Event e;
 
-			//The dot that will be moving around on the screen
-			Player player(SCREEN_WIDTH/2, SCREEN_HEIGHT/2);
+			//Set text color as black
+			SDL_Color textColor = { 0, 0, 0, 255 };
+
+			//In memory text stream
+			std::stringstream timeText;
+
+			//The frames per second timer
+			//LTimer fpsTimer;
+			//int countedFrames = 0;
+			//fpsTimer.start();
+
+			Player player(gRenderer);
 			Enemy enemy;
 
-			//Set the wall
-			SDL_Rect wall;
-
-			//While application is running
 			while (!quit)
 			{
-				//Handle events on queue
 				while (SDL_PollEvent(&e) != 0)
 				{
-					//User requests quit
 					if (e.type == SDL_QUIT)
 					{
 						quit = true;
 					}
 
-					//Handle input for the dot
-					player.handleEvent(e);
+					player.handleEvent( e);
+					
 				}
 
-				//Move the dot and check collision
-				player.move(wall);
-				enemy.response(player.getCollider(), wall);
+				player.move();
+				enemy.response(player.getCollider());
 
-				//Clear screen
+				timeText.str("");
+				timeText << "Force " << player.getForce();
+
+				//Render text
+				if (!gTimeTextTexture.loadFromRenderedText(gRenderer, gFont, timeText.str().c_str(), textColor))
+				{
+					printf("Unable to render time texture!\n");
+				}
+
+				//Calculate and correct fps
+				//float avgFPS = countedFrames / (fpsTimer.getTicks() / 1000.f);
+				//if (avgFPS > 2000000)
+				//{
+				//	avgFPS = 0;
+				//}
+				//std::cout << "Average Frames Per Second " << avgFPS << std::endl;
+
 				SDL_SetRenderDrawColor(gRenderer, 0xFF, 0xFF, 0xFF, 0xFF);
 				SDL_RenderClear(gRenderer);
 
-				//Render wall
-				//SDL_SetRenderDrawColor(gRenderer, 0x00, 0x00, 0x00, 0xFF);
-				//SDL_RenderDrawRect(gRenderer, &wall);
-
-				//Render dot
-				player.render(gRenderer, gPlayerTexture);
+				//Render characters
+				player.render(gPlayerTexture);
 				enemy.render(gRenderer, gEnemyTexture);
 
-				//Update screen
+				//Render textures
+				gPromptTextTexture.render(gRenderer, (SCREEN_WIDTH - gPromptTextTexture.getWidth()) / 2, 0);
+				gTimeTextTexture.render(gRenderer, (SCREEN_WIDTH - gTimeTextTexture.getWidth()) / 2, (SCREEN_HEIGHT - gTimeTextTexture.getHeight()));
+
 				SDL_RenderPresent(gRenderer);
+				//++countedFrames;
 			}
 		}
 	}
 
-	//Free resources and close SDL
 	close();
 
 	return 0;
@@ -146,6 +160,13 @@ bool init()
 					printf("SDL_image could not initialize! SDL_image Error: %s\n", IMG_GetError());
 					success = false;
 				}
+
+				//Initialize SDL_ttf
+				if (TTF_Init() == -1)
+				{
+					printf("SDL_ttf could not initialize! SDL_ttf Error: %s\n", TTF_GetError());
+					success = false;
+				}
 			}
 		}
 	}
@@ -171,6 +192,24 @@ bool loadMedia()
 		success = false;
 	}
 
+	//Open the font
+	gFont = TTF_OpenFont("assets/lazy.ttf", 28);
+	if (gFont == NULL)
+	{
+		printf("Failed to load lazy font! SDL_ttf Error: %s\n", TTF_GetError());
+		success = false;
+	}
+	else
+	{
+		//Render text
+		SDL_Color textColor = { 0, 0, 0 };
+		if (!gPromptTextTexture.loadFromRenderedText(gRenderer, gFont, "Click, drag and release to move.", textColor))
+		{
+			printf("Failed to render text texture!\n");
+			success = false;
+		}
+	}
+
 	return success;
 }
 
@@ -179,6 +218,12 @@ void close()
 	//Free loaded images
 	gPlayerTexture.free();
 	gEnemyTexture.free();
+	gTimeTextTexture.free();
+	gPromptTextTexture.free();
+
+	//Free global font
+	TTF_CloseFont(gFont);
+	gFont = NULL;
 
 	//Destroy window	
 	SDL_DestroyRenderer(gRenderer);
@@ -189,5 +234,6 @@ void close()
 	//Quit SDL subsystems
 	IMG_Quit();
 	SDL_Quit();
+	TTF_Quit();
 }
 

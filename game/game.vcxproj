@@ -22,6 +22,7 @@
     <ClCompile Include="Enemy.cpp" />
     <ClCompile Include="Game.cpp" />
     <ClCompile Include="LTexture.cpp" />
+    <ClCompile Include="LTimer.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="Others.cpp" />
     <ClCompile Include="Player.cpp" />
@@ -30,6 +31,7 @@
     <ClInclude Include="Enemy.h" />
     <ClInclude Include="Game.h" />
     <ClInclude Include="LTexture.h" />
+    <ClInclude Include="LTimer.h" />
     <ClInclude Include="Others.h" />
     <ClInclude Include="Player.h" />
   </ItemGroup>

@@ -44,3 +44,10 @@ bool checkCollision(SDL_Rect a, SDL_Rect b)
 	//If none of the sides from A are outside B
 	return true;
 }
+
+double pytago(int a, int b)
+{
+	double c = sqrt(a * a + b * b);
+	if (c) return c;
+	return 1;
+}

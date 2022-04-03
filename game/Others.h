@@ -17,4 +17,6 @@ public:
 
 bool checkCollision(SDL_Rect a, SDL_Rect b);
 
+double pytago(int a, int b);
+
 #endif // !OTHER_H_
