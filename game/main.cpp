@@ -1,5 +1,6 @@
 #include <SDL.h>
 #include <SDL_image.h>
+#include <SDL_ttf.h>
 #include <stdio.h>
 #include <string>
 
@@ -48,15 +49,11 @@ int main(int argc, char* args[])
 			SDL_Event e;
 
 			//The dot that will be moving around on the screen
-			Player player;
+			Player player(SCREEN_WIDTH/2, SCREEN_HEIGHT/2);
 			Enemy enemy;
 
 			//Set the wall
 			SDL_Rect wall;
-			wall.x = 300;
-			wall.y = 40;
-			wall.w = 40;
-			wall.h = 400;
 
 			//While application is running
 			while (!quit)
@@ -83,8 +80,8 @@ int main(int argc, char* args[])
 				SDL_RenderClear(gRenderer);
 
 				//Render wall
-				SDL_SetRenderDrawColor(gRenderer, 0x00, 0x00, 0x00, 0xFF);
-				SDL_RenderDrawRect(gRenderer, &wall);
+				//SDL_SetRenderDrawColor(gRenderer, 0x00, 0x00, 0x00, 0xFF);
+				//SDL_RenderDrawRect(gRenderer, &wall);
 
 				//Render dot
 				player.render(gRenderer, gPlayerTexture);

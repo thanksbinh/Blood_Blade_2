@@ -17,7 +17,7 @@ public:
 	static const int PLAYER_VEL = 10;
 
 	//Initializes the variables
-	Player();
+	Player(const int& x, const int& y);
 
 	//Takes key presses and adjusts the dot's velocity
 	void handleEvent(SDL_Event& e);
@@ -39,6 +39,9 @@ private:
 
 	//The velocity of the dot
 	int mVelX, mVelY;
+
+	//Remaining velocity
+	int remainVel = 0;
 
 	//Dot's collision box
 	SDL_Rect mCollider;

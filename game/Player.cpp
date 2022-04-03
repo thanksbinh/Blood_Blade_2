@@ -1,11 +1,12 @@
 #include "Player.h"
 #include "Others.h"
+#include <math.h>
 
-Player::Player()
+Player::Player(const int& x, const int& y)
 {
     //Initialize the offsets
-    mPosX = 0;
-    mPosY = 0;
+    mPosX = x;
+    mPosY = y;
 
     //Set collision box dimension
     mCollider.w = PLAYER_WIDTH;
@@ -14,6 +15,12 @@ Player::Player()
     //Initialize the velocity
     mVelX = 0;
     mVelY = 0;
+}
+
+double pytago(int a, int b)
+{
+    double c = sqrt(a * a + b * b);
+    return c;
 }
 
 void Player::handleEvent(SDL_Event& e)
@@ -31,13 +38,28 @@ void Player::handleEvent(SDL_Event& e)
 
                 if (e.type == SDL_MOUSEBUTTONUP) {
                     SDL_GetMouseState(&xt2, &yt2);
-                    mPosX += (xt1 - xt2);
-                    mPosY += (yt1 - yt2);
                     break;
                 }
             }
 
+            mVelX = PLAYER_VEL * (xt1 - xt2) * 1.0 / pytago((xt1 - xt2), (yt1 - yt2));
+            mVelY = PLAYER_VEL * (yt1 - yt2) * 1.0 / pytago((xt1 - xt2), (yt1 - yt2));
+            remainVel = 10;
+
             std::cout << "x = " << mPosX << ", y = " << mPosY << std::endl;
+        }
+    }
+    else
+    {
+        if (remainVel > 0)
+        {
+            remainVel--;
+            std::cout << "remainVel = " << remainVel << std::endl;
+        }
+        else
+        {
+            mVelX = 0;
+            mVelY = 0;
         }
     }
 
@@ -73,24 +95,22 @@ void Player::move(SDL_Rect& wall)
     mPosX += mVelX;
     mCollider.x = mPosX;
 
-    //If the dot collided or went too far to the left or right
-    if ((mPosX < 0) || (mPosX + PLAYER_WIDTH > SCREEN_WIDTH) || checkCollision(mCollider, wall))
+    //If the dot went too far to the left or right
+    if ((mPosX < 0) || (mPosX + PLAYER_WIDTH > SCREEN_WIDTH))
     {
-        //Move back
-        mPosX -= mVelX;
-        mCollider.x = mPosX;
+        //Change direction
+        mVelX *= -1;
     }
 
     //Move the dot up or down
     mPosY += mVelY;
     mCollider.y = mPosY;
 
-    //If the dot collided or went too far up or down
-    if ((mPosY < 0) || (mPosY + PLAYER_HEIGHT > SCREEN_HEIGHT) || checkCollision(mCollider, wall))
+    //If the dot went too far up or down
+    if ((mPosY < 0) || (mPosY + PLAYER_HEIGHT > SCREEN_HEIGHT))
     {
-        //Move back
-        mPosY -= mVelY;
-        mCollider.y = mPosY;
+        //Change direction
+        mVelY *= -1;
     }
 }
 
