@@ -16,7 +16,7 @@ class Enemy
 public:
 	//static const int PLAYER_VEL = 10;
 
-	Enemy();
+	Enemy(SDL_Renderer* gRenderer);
 
 	void spawn();
 
@@ -26,9 +26,11 @@ public:
 
 	//void move(SDL_Rect& wall);
 
-	void render(SDL_Renderer* gRenderer, LTexture& gDotTexture);
+	void render(LTexture& gDotTexture, SDL_Rect& camera);
 
 private:
+	SDL_Renderer* renderer;
+
 	//Enemy position
 	Point mPos;
 

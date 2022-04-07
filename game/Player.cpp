@@ -5,18 +5,34 @@
 #include <sstream>
 #include <SDL_ttf.h>
 
-Player::Player(SDL_Renderer* gRenderer)
+Player::Player(SDL_Renderer* gRenderer, LTexture& gRedTexture, SDL_Rect& camera)
 {
     renderer = gRenderer;
 
-    mPos.x = SCREEN_WIDTH / 2;
-    mPos.y = SCREEN_HEIGHT / 2;
+    mPos.x = LEVEL_WIDTH / 2;
+    mPos.y = LEVEL_HEIGHT / 2;
 
     mCollider.w = PLAYER_WIDTH;
     mCollider.h = PLAYER_HEIGHT;
 
     mVelX = 0;
     mVelY = 0;
+
+    redTexture = gRedTexture;
+    //Initialize particles
+    for (int i = 0; i < TOTAL_PARTICLES; ++i)
+    {
+        particles[i] = new Particle(mPos.x - camera.x, mPos.y - camera.y, redTexture);
+    }
+}
+
+Player::~Player()
+{
+    //Delete particles
+    for (int i = 0; i < TOTAL_PARTICLES; ++i)
+    {
+        delete particles[i];
+    }
 }
 
 void Player::updateVel(const int& x, const int& y)
@@ -25,12 +41,12 @@ void Player::updateVel(const int& x, const int& y)
     mVelY = PLAYER_VEL * (y * 1.0) / pytago(x, y);
 }
 
-void Player::handleEvent(SDL_Event& e)
+void Player::handleEvent(SDL_Event& e, SDL_Rect& camera)
 {
     if (e.type == SDL_MOUSEBUTTONDOWN && !isHold)
     {
         SDL_GetMouseState(&initPos.x, &initPos.y);
-        if (0 < initPos.x - mPos.x && initPos.x - mPos.x < PLAYER_WIDTH && 0 < initPos.y - mPos.y && initPos.y - mPos.y < PLAYER_HEIGHT)
+        if (mPos.x - camera.x < initPos.x && initPos.x < mPos.x - camera.x + PLAYER_WIDTH && mPos.y - camera.y < initPos.y && initPos.y < mPos.y - camera.y + PLAYER_HEIGHT)
         {
             mTime.start();
             isHold = true;
@@ -47,6 +63,9 @@ void Player::handleEvent(SDL_Event& e)
 
 void Player::move()
 {
+    if (mVelX < 0) flip = SDL_FLIP_HORIZONTAL;
+    else if (mVelX > 0) flip = SDL_FLIP_NONE;
+
     if (isHold)
     {
         mForce = (mTime.getTicks() / 10) % 100;
@@ -55,7 +74,7 @@ void Player::move()
     {
         mPos.x += mVelX;
         mCollider.x = mPos.x;
-        if ((mPos.x < 0) || (mPos.x + PLAYER_WIDTH > SCREEN_WIDTH))
+        if ((mPos.x < 0) || (mPos.x + PLAYER_WIDTH > LEVEL_WIDTH))
         {
             mVelX = -mVelX;
             mForce += PLAYER_VEL / 10;
@@ -63,7 +82,7 @@ void Player::move()
 
         mPos.y += mVelY;
         mCollider.y = mPos.y;
-        if ((mPos.y < 0) || (mPos.y + PLAYER_HEIGHT > SCREEN_HEIGHT))
+        if ((mPos.y < 0) || (mPos.y + PLAYER_HEIGHT > LEVEL_HEIGHT))
         {
             mVelY = -mVelY;
             mForce += PLAYER_VEL / 10;
@@ -73,14 +92,37 @@ void Player::move()
     }
     else
     {
-        mForce = 0;
-        mVelX = 0;
-        mVelY = 0;
+        mForce = mVelX = mVelY = 0;
     }
 }
 
-void Player::render(LTexture& gDotTexture)
+void Player::renderParticles(SDL_Rect& camera)
 {
-    gDotTexture.render(renderer, mPos.x, mPos.y);
+    //Go through particles
+    for (int i = 0; i < TOTAL_PARTICLES; ++i)
+    {
+        //Delete and replace dead particles
+        if (particles[i]->isDead())
+        {
+            delete particles[i];
+            particles[i] = new Particle(mPos.x, mPos.y, redTexture);
+        }
+    }
+
+    //Show particles
+    for (int i = 0; i < TOTAL_PARTICLES; ++i)
+    {
+        particles[i]->render(renderer, camera);
+    }
 }
+
+void Player::render(LTexture& gPlayerTexture, SDL_Rect& camera)
+{
+    gPlayerTexture.render(renderer, mPos.x - camera.x, mPos.y - camera.y, NULL, 0.0, 0, flip);
+    //gPlayerTexture.render(renderer, mPos.x, mPos.y, NULL, 0.0, 0, flip);
+
+    //Show particles on top of dot
+    renderParticles(camera);
+}
+
 

@@ -11,21 +11,24 @@
 #include "LTexture.h"
 #include "LTimer.h"
 #include "Others.h"
+#include "Particle.h"
 
 class Player
 {
 public:
 	static const int PLAYER_VEL = 20;
 
-	Player(SDL_Renderer* gRenderer);
+	Player(SDL_Renderer* gRenderer, LTexture& gRedTexture, SDL_Rect& camera);
 
-	void handleEvent(SDL_Event& e);
+	~Player();
+
+	void handleEvent(SDL_Event& e, SDL_Rect& camera);
 
 	void move();
 
 	void updateVel(const int& x, const int& y);
 
-	void render(LTexture& gDotTexture);
+	void render(LTexture& gPlayerTexture, SDL_Rect& camera);
 
 	Point getPos() { return mPos; }
 
@@ -33,8 +36,18 @@ public:
 
 	int getForce() { return mForce; }
 
+	//Shows the particles
+	void renderParticles(SDL_Rect& camera);
+
 private:
 	SDL_Renderer* renderer;
+
+	//The particles
+	LTexture redTexture;
+	Particle* particles[TOTAL_PARTICLES];
+
+	//Player flip when change direction
+	SDL_RendererFlip flip = SDL_FLIP_NONE;
 
 	//Player position
 	Point mPos;

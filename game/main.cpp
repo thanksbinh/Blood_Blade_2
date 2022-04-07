@@ -21,6 +21,11 @@ LTexture gEnemyTexture;
 LTexture gBGTexture;
 LTexture gTimeTextTexture;
 LTexture gPromptTextTexture;
+LTexture gRedTexture;
+
+//const int WALKING_ANIMATION_FRAMES = 8;
+//SDL_Rect gSpriteClips[WALKING_ANIMATION_FRAMES];
+//LTexture gSpriteSheetTexture;
 
 bool init();
 bool loadMedia();
@@ -50,13 +55,11 @@ int main(int argc, char* args[])
 			//In memory text stream
 			std::stringstream timeText;
 
-			//The frames per second timer
-			//LTimer fpsTimer;
-			//int countedFrames = 0;
-			//fpsTimer.start();
+			//The camera area
+			SDL_Rect camera = { 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT };
 
-			Player player(gRenderer);
-			Enemy enemy;
+			Player player(gRenderer, gRedTexture, camera);
+			Enemy enemy(gRenderer);
 
 			while (!quit)
 			{
@@ -67,7 +70,7 @@ int main(int argc, char* args[])
 						quit = true;
 					}
 
-					player.handleEvent( e);
+					player.handleEvent(e, camera);
 					
 				}
 
@@ -82,28 +85,43 @@ int main(int argc, char* args[])
 				{
 					printf("Unable to render time texture!\n");
 				}
+				//Center the camera over the dot
+				camera.x = (player.getPos().x + PLAYER_WIDTH / 2) - SCREEN_WIDTH / 2;
+				camera.y = (player.getPos().y + PLAYER_HEIGHT / 2) - SCREEN_HEIGHT / 2;
 
-				//Calculate and correct fps
-				//float avgFPS = countedFrames / (fpsTimer.getTicks() / 1000.f);
-				//if (avgFPS > 2000000)
-				//{
-				//	avgFPS = 0;
-				//}
-				//std::cout << "Average Frames Per Second " << avgFPS << std::endl;
+				//Keep the camera in bounds
+				if (camera.x < 0)
+				{
+					camera.x = 0;
+				}
+				if (camera.y < 0)
+				{
+					camera.y = 0;
+				}
+				if (camera.x > LEVEL_WIDTH - camera.w)
+				{
+					camera.x = LEVEL_WIDTH - camera.w;
+				}
+				if (camera.y > LEVEL_HEIGHT - camera.h)
+				{
+					camera.y = LEVEL_HEIGHT - camera.h;
+				}
 
 				SDL_SetRenderDrawColor(gRenderer, 0xFF, 0xFF, 0xFF, 0xFF);
 				SDL_RenderClear(gRenderer);
+				
+				//Render background
+				gBGTexture.render(gRenderer, 0, 0, &camera);
 
 				//Render characters
-				player.render(gPlayerTexture);
-				enemy.render(gRenderer, gEnemyTexture);
+				player.render(gPlayerTexture, camera);
+				enemy.render(gEnemyTexture, camera);
 
 				//Render textures
 				gPromptTextTexture.render(gRenderer, (SCREEN_WIDTH - gPromptTextTexture.getWidth()) / 2, 0);
 				gTimeTextTexture.render(gRenderer, (SCREEN_WIDTH - gTimeTextTexture.getWidth()) / 2, (SCREEN_HEIGHT - gTimeTextTexture.getHeight()));
 
 				SDL_RenderPresent(gRenderer);
-				//++countedFrames;
 			}
 		}
 	}
@@ -179,6 +197,20 @@ bool loadMedia()
 	//Loading success flag
 	bool success = true;
 
+	//Load background texture
+	if (!gBGTexture.loadFromFile(gRenderer, "assets/bg.png", LEVEL_WIDTH, LEVEL_HEIGHT))
+	{
+		printf("Failed to load background texture!\n");
+		success = false;
+	}
+
+	//Load red texture
+	if (!gRedTexture.loadFromFile(gRenderer, "assets/red.bmp", 5, 5))
+	{
+		printf("Failed to load red texture!\n");
+		success = false;
+	}
+
 	//Load press texture
 	if (!gPlayerTexture.loadFromFile(gRenderer, "assets/player.png", PLAYER_WIDTH, PLAYER_HEIGHT))
 	{
@@ -186,7 +218,60 @@ bool loadMedia()
 		success = false;
 	}
 
-	if (!gEnemyTexture.loadFromFile(gRenderer, "assets/enemy.png", PLAYER_WIDTH, PLAYER_HEIGHT))
+	//Set texture transparency
+	gRedTexture.setAlpha(192);
+
+	////Load sprite sheet texture
+	//if (!gSpriteSheetTexture.loadFromFile(gRenderer, "assets/assassin.png", PLAYER_WIDTH, PLAYER_HEIGHT))
+	//{
+	//	printf("Failed to load walking animation texture!\n");
+	//	success = false;
+	//}
+	//else
+	//{
+	//	//Set sprite clips
+	//	gSpriteClips[0].x = 0;
+	//	gSpriteClips[0].y = 0;
+	//	gSpriteClips[0].w = 32;
+	//	gSpriteClips[0].h = 32;
+
+	//	gSpriteClips[1].x = 32;
+	//	gSpriteClips[1].y = 0;
+	//	gSpriteClips[1].w = 32;
+	//	gSpriteClips[1].h = 32;
+
+	//	gSpriteClips[2].x = 64;
+	//	gSpriteClips[2].y = 0;
+	//	gSpriteClips[2].w = 32;
+	//	gSpriteClips[2].h = 32;
+
+	//	gSpriteClips[3].x = 96;
+	//	gSpriteClips[3].y = 0;
+	//	gSpriteClips[3].w = 32;
+	//	gSpriteClips[3].h = 32;
+
+	//	gSpriteClips[4].x = 128;
+	//	gSpriteClips[4].y = 0;
+	//	gSpriteClips[4].w = 32;
+	//	gSpriteClips[4].h = 32;
+
+	//	gSpriteClips[5].x = 0;
+	//	gSpriteClips[5].y = 32;
+	//	gSpriteClips[5].w = 32;
+	//	gSpriteClips[5].h = 32;
+
+	//	gSpriteClips[6].x = 32;
+	//	gSpriteClips[6].y = 32;
+	//	gSpriteClips[6].w = 32;
+	//	gSpriteClips[6].h = 32;
+
+	//	gSpriteClips[7].x = 64;
+	//	gSpriteClips[7].y = 32;
+	//	gSpriteClips[7].w = 32;
+	//	gSpriteClips[7].h = 32;
+	//}
+
+	if (!gEnemyTexture.loadFromFile(gRenderer, "assets/rogue.png", PLAYER_WIDTH, PLAYER_HEIGHT))
 	{
 		printf("Failed to load dot texture!\n");
 		success = false;
@@ -216,10 +301,16 @@ bool loadMedia()
 void close()
 {
 	//Free loaded images
+	//gSpriteSheetTexture.free();
+
+	//Free loaded images
+	gBGTexture.free();
 	gPlayerTexture.free();
 	gEnemyTexture.free();
 	gTimeTextTexture.free();
 	gPromptTextTexture.free();
+
+	gRedTexture.free();
 
 	//Free global font
 	TTF_CloseFont(gFont);

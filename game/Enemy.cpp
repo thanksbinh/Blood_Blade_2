@@ -1,8 +1,10 @@
 #include "Enemy.h"
 #include "Player.h"
 
-Enemy::Enemy()
+Enemy::Enemy(SDL_Renderer* gRenderer)
 {
+    renderer = gRenderer;
+
     mCollider.w = PLAYER_WIDTH;
     mCollider.h = PLAYER_HEIGHT;
 
@@ -14,21 +16,21 @@ Enemy::Enemy()
 
 void Enemy::spawn()
 {
-    mCollider.x = mPos.x = rand() % (SCREEN_WIDTH - PLAYER_WIDTH);
-    mCollider.y = mPos.y = rand() % (SCREEN_HEIGHT - PLAYER_HEIGHT);
+    mCollider.x = mPos.x = rand() % (LEVEL_WIDTH - PLAYER_WIDTH);
+    mCollider.y = mPos.y = rand() % (LEVEL_HEIGHT - PLAYER_HEIGHT);
 }
 
 void Enemy::response(SDL_Rect playerCollider)
 {
-    if ((mPos.x < 0) || (mPos.x + PLAYER_WIDTH > SCREEN_WIDTH) || checkCollision(mCollider, playerCollider))
+    if (checkCollision(mCollider, playerCollider))
     {
         std::cout << "Enemy killed!" << std::endl;
         spawn();
     }
 }
 
-void Enemy::render(SDL_Renderer* gRenderer, LTexture& gDotTexture)
+void Enemy::render(LTexture& gDotTexture, SDL_Rect& camera)
 {
-    gDotTexture.render(gRenderer, mPos.x, mPos.y);
+    gDotTexture.render(renderer, mPos.x - camera.x, mPos.y - camera.y);
 }
 
