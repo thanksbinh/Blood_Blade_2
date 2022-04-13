@@ -14,29 +14,32 @@
 class Enemy
 {
 public:
-	//static const int PLAYER_VEL = 10;
+	static const int ENEMY_VEL = 5;
 
 	Enemy(SDL_Renderer* gRenderer);
+	~Enemy();
 
-	void spawn();
+	void spawn(const SDL_Rect& camera);
 
-	//void handleEvent(SDL_Event& e);
+	void move(const Point& playerPos, const SDL_Rect& playerCollider);
+	void updateVel(const Point& playerPos);
 
-	void response(SDL_Rect playerCollider);
+	int playerDis(const Point& playerPos);
 
-	//void move(SDL_Rect& wall);
+	void render(LTexture& gEnemyTexture, LTexture& gRedSlash, const SDL_Rect& camera);
 
-	void render(LTexture& gDotTexture, SDL_Rect& camera);
+	bool getHit() { return gotHit; }
 
 private:
 	SDL_Renderer* renderer;
 
-	//Enemy position
 	Point mPos;
-
-	//int mVelX, mVelY;
-
+	int mVelX, mVelY;
 	SDL_Rect mCollider;
+
+	SDL_RendererFlip flip = SDL_FLIP_NONE;
+
+	bool gotHit = false;
 };
 
 #endif // !ENEMY_H_

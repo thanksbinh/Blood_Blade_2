@@ -14,6 +14,6 @@ static const int PLAYER_WIDTH = 32;
 static const int PLAYER_HEIGHT = 32;
 
 //Particle count
-const int TOTAL_PARTICLES = 10;
+const int TOTAL_PARTICLES = 20;
 
 #endif /* Game_h */

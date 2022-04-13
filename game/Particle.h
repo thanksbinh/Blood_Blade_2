@@ -11,7 +11,7 @@ public:
 	Particle(int x, int y, LTexture& gRedTexture);
 
 	//Shows the particle
-	void render(SDL_Renderer* gRenderer, SDL_Rect& camera);
+	void render(SDL_Renderer* gRenderer, const SDL_Rect& camera);
 
 	//Checks if particle is dead
 	bool isDead();

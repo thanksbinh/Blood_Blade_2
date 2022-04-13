@@ -12,7 +12,7 @@ Particle::Particle(int x, int y, LTexture& gRedTexture)
     mTexture = &gRedTexture;
 }
 
-void Particle::render(SDL_Renderer* gRenderer, SDL_Rect& camera)
+void Particle::render(SDL_Renderer* gRenderer, const SDL_Rect& camera)
 {
     //Show image
     mTexture->render(gRenderer, mPosX - camera.x, mPosY - camera.y);

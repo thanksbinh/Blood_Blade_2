@@ -5,7 +5,11 @@
 #include <sstream>
 #include <SDL_ttf.h>
 
-Player::Player(SDL_Renderer* gRenderer, LTexture& gRedTexture, SDL_Rect& camera)
+#define FORCE_SPEED 1/10
+#define FORCE_SPEED_CAPABILITY 100
+#define FORCE_LOSS 2
+
+Player::Player(SDL_Renderer* gRenderer, LTexture& gRedTexture, const SDL_Rect& camera)
 {
     renderer = gRenderer;
 
@@ -15,19 +19,20 @@ Player::Player(SDL_Renderer* gRenderer, LTexture& gRedTexture, SDL_Rect& camera)
     mCollider.w = PLAYER_WIDTH;
     mCollider.h = PLAYER_HEIGHT;
 
-    mVelX = 0;
-    mVelY = 0;
+    mVelX = mVelY = 0;
 
-    redTexture = gRedTexture;
     //Initialize particles
     for (int i = 0; i < TOTAL_PARTICLES; ++i)
     {
-        particles[i] = new Particle(mPos.x - camera.x, mPos.y - camera.y, redTexture);
+        particles[i] = new Particle(mPos.x - camera.x, mPos.y - camera.y, gRedTexture);
     }
 }
 
 Player::~Player()
 {
+    SDL_DestroyRenderer(renderer);
+    renderer = NULL;
+
     //Delete particles
     for (int i = 0; i < TOTAL_PARTICLES; ++i)
     {
@@ -41,7 +46,7 @@ void Player::updateVel(const int& x, const int& y)
     mVelY = PLAYER_VEL * (y * 1.0) / pytago(x, y);
 }
 
-void Player::handleEvent(SDL_Event& e, SDL_Rect& camera)
+void Player::handleEvent(SDL_Event& e, const SDL_Rect& camera)
 {
     if (e.type == SDL_MOUSEBUTTONDOWN && !isHold)
     {
@@ -57,7 +62,7 @@ void Player::handleEvent(SDL_Event& e, SDL_Rect& camera)
         SDL_GetMouseState(&lastPos.x, &lastPos.y);
         updateVel((initPos.x - lastPos.x), (initPos.y - lastPos.y));
 
-        std::cout << "Final remainVel " << mForce << std::endl;
+        std::cerr << "Final remainVel " << mForce << std::endl;
     }
 }
 
@@ -68,7 +73,8 @@ void Player::move()
 
     if (isHold)
     {
-        mForce = (mTime.getTicks() / 10) % 100;
+        mForce = (mTime.getTicks() * FORCE_SPEED) % (2 * FORCE_SPEED_CAPABILITY);
+        if (mForce > FORCE_SPEED_CAPABILITY) mForce = 2 * FORCE_SPEED_CAPABILITY - mForce;
     }
     else if (mForce > 0)
     {
@@ -77,18 +83,16 @@ void Player::move()
         if ((mPos.x < 0) || (mPos.x + PLAYER_WIDTH > LEVEL_WIDTH))
         {
             mVelX = -mVelX;
-            mForce += PLAYER_VEL / 10;
+            mForce += FORCE_LOSS;
         }
-
         mPos.y += mVelY;
         mCollider.y = mPos.y;
         if ((mPos.y < 0) || (mPos.y + PLAYER_HEIGHT > LEVEL_HEIGHT))
         {
             mVelY = -mVelY;
-            mForce += PLAYER_VEL / 10;
+            mForce += FORCE_LOSS;
         }
-
-        mForce -= PLAYER_VEL / 10;
+        mForce -= FORCE_LOSS;
     }
     else
     {
@@ -96,33 +100,30 @@ void Player::move()
     }
 }
 
-void Player::renderParticles(SDL_Rect& camera)
+void Player::renderParticles(LTexture& gRedTexture, const SDL_Rect& camera)
 {
     //Go through particles
-    for (int i = 0; i < TOTAL_PARTICLES; ++i)
+    for (int i = 0; i < mForce/5; ++i)
     {
         //Delete and replace dead particles
         if (particles[i]->isDead())
         {
             delete particles[i];
-            particles[i] = new Particle(mPos.x, mPos.y, redTexture);
+            particles[i] = new Particle(mPos.x, mPos.y, gRedTexture);
         }
     }
 
     //Show particles
-    for (int i = 0; i < TOTAL_PARTICLES; ++i)
+    for (int i = 0; i < mForce/5; ++i)
     {
         particles[i]->render(renderer, camera);
     }
 }
 
-void Player::render(LTexture& gPlayerTexture, SDL_Rect& camera)
+void Player::render(LTexture& gPlayerTexture, LTexture& gRedTexture, const SDL_Rect& camera)
 {
     gPlayerTexture.render(renderer, mPos.x - camera.x, mPos.y - camera.y, NULL, 0.0, 0, flip);
-    //gPlayerTexture.render(renderer, mPos.x, mPos.y, NULL, 0.0, 0, flip);
-
-    //Show particles on top of dot
-    renderParticles(camera);
+    renderParticles(gRedTexture, camera);
 }
 
 
