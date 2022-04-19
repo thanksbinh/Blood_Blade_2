@@ -3,8 +3,8 @@
 Particle::Particle(int x, int y, LTexture& gRedTexture)
 {
     //Set offsets
-    mPosX = x - 5 + (rand() % 25);
-    mPosY = y - 5 + (rand() % 25);
+    mPosX = x + (rand() % 25);
+    mPosY = y + (rand() % 25);
 
     //Initialize animation
     mFrame = rand() % 5;

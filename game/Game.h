@@ -16,4 +16,6 @@ static const int PLAYER_HEIGHT = 32;
 //Particle count
 const int TOTAL_PARTICLES = 20;
 
+const int TOTAL_ENEMY = 5;
+
 #endif /* Game_h */

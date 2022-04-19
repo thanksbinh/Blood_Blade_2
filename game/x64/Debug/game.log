@@ -1,9 +1,1 @@
-﻿  Enemy.cpp
-C:\Users\binh1\Desktop\Blood_Blade_2\game\Enemy.cpp(38,40): warning C4244: 'argument': conversion from 'double' to 'int', possible loss of data
-C:\Users\binh1\Desktop\Blood_Blade_2\game\Enemy.cpp(38,37): warning C4244: 'argument': conversion from 'double' to 'int', possible loss of data
-C:\Users\binh1\Desktop\Blood_Blade_2\game\Enemy.cpp(38,23): warning C4244: '=': conversion from 'double' to 'int', possible loss of data
-C:\Users\binh1\Desktop\Blood_Blade_2\game\Enemy.cpp(39,40): warning C4244: 'argument': conversion from 'double' to 'int', possible loss of data
-C:\Users\binh1\Desktop\Blood_Blade_2\game\Enemy.cpp(39,37): warning C4244: 'argument': conversion from 'double' to 'int', possible loss of data
-C:\Users\binh1\Desktop\Blood_Blade_2\game\Enemy.cpp(39,23): warning C4244: '=': conversion from 'double' to 'int', possible loss of data
-C:\Users\binh1\Desktop\Blood_Blade_2\game\Enemy.cpp(44,18): warning C4244: 'return': conversion from 'double' to 'int', possible loss of data
-  game.vcxproj -> C:\Users\binh1\Desktop\Blood_Blade_2\game\x64\Debug\game.exe
+﻿  game.vcxproj -> C:\Users\binh1\Desktop\Blood_Blade_2\game\x64\Debug\game.exe

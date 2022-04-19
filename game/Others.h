@@ -19,4 +19,6 @@ bool checkCollision(SDL_Rect a, SDL_Rect b);
 
 double pytago(int a, int b);
 
+int distance(const Point& p1, const Point& p2);
+
 #endif // !OTHER_H_

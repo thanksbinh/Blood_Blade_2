@@ -17,22 +17,27 @@ class Player
 {
 public:
 	static const int PLAYER_VEL = 20;
+	static const int PLAYER_MAX_HP = 50;
 
 	Player(SDL_Renderer* gRenderer, LTexture& gRedTexture, const SDL_Rect& camera);
 	~Player();
 
 	void handleEvent(SDL_Event& e, const SDL_Rect& camera);
+	void react(const SDL_Rect& enemyCollider);
 
 	void move();
 	void updateVel(const int& x, const int& y);
+	void updateForce();
 
-	void render(LTexture& gPlayerTexture, LTexture& gRedTexture, const SDL_Rect& camera);
+	void render(LTexture& gPlayerTexture, LTexture& gRedTexture, LTexture& gBlueSlash, const SDL_Rect& camera);
 	void renderParticles(LTexture& gRedTexture, const SDL_Rect& camera);
 
 	Point getPos() { return mPos; }
 	SDL_Rect getCollider() { return mCollider; }
 	int getForce() { return mForce; }
-	bool isMoving() { return (mForce > 0); }
+	bool isMoving() { return (mVelX != 0) || (mVelY != 0); }
+
+	int getHP() { return mHP; }
 
 private:
 	SDL_Renderer* renderer;
@@ -40,8 +45,13 @@ private:
 
 	Point mPos;
 	int mVelX, mVelY;
-	int mForce = 0;
+	int mForce;
 	SDL_Rect mCollider;
+
+	int mHP;
+	bool gotHit;
+	bool isAlive;
+	bool isAppear;
 
 	//Mouse stuff
 	Point initPos, lastPos;

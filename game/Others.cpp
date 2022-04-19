@@ -51,3 +51,8 @@ double pytago(int a, int b)
 	if (c) return c;
 	return 1;
 }
+
+int distance(const Point& p1, const Point& p2)
+{
+	return pytago(p1.x - p2.x, p1.y - p2.y);
+}

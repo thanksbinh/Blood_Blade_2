@@ -1,33 +1,78 @@
 #include "Enemy.h"
 #include "Player.h"
 
-Enemy::Enemy(SDL_Renderer* gRenderer)
+#define SPIN_SPEED 15
+
+Enemy::Enemy(SDL_Renderer* gRenderer, LTexture& gRedTexture, const SDL_Rect& camera)
 {
     renderer = gRenderer;
 
     mCollider.w = PLAYER_WIDTH;
     mCollider.h = PLAYER_HEIGHT;
 
-    mCollider.x = mPos.x = LEVEL_WIDTH / 2;
-    mCollider.y = mPos.y = LEVEL_HEIGHT / 2 - 100;
-
     mVelX = mVelY = 0;
+
+    spawn(camera);
 }
 
 Enemy::~Enemy()
 {
     SDL_DestroyRenderer(renderer);
     renderer = NULL;
+
+    //Delete particles
+    for (int i = 0; i < TOTAL_PARTICLES; ++i)
+    {
+        delete particles[i];
+    }
 }
 
 void Enemy::spawn(const SDL_Rect& camera)
 {
     gotHit = false;
+    isAlive = true;
+    isAppear = true;
+    hasParticle = false;
+    mHP = ENEMY_MAX_HP;
 
     do {
         mCollider.x = mPos.x = rand() % (LEVEL_WIDTH - PLAYER_WIDTH);
         mCollider.y = mPos.y = rand() % (LEVEL_HEIGHT - PLAYER_HEIGHT);
     } while (checkCollision(mCollider, camera));
+}
+
+void Enemy::react(const SDL_Rect& playerCollider, const bool playerIsMoving)
+{
+    if (playerIsMoving && checkCollision(mCollider, playerCollider))
+    {
+        gotHit = true;
+        mHP--;
+
+        std::cerr << "enemy's hp: " << mHP << std::endl;
+    }
+
+    if (!playerIsMoving && mHP <= 0)
+    {
+        isAlive = false;
+        if (!mTime.isStarted()) mTime.start();
+    }
+
+    if (!isAlive && mTime.getTicks() > 1000)
+    {
+        isAppear = false;
+        mTime.stop();
+    }
+}
+
+void Enemy::attack()
+{
+    mPos.x += mVelX * 2;
+    mCollider.x = mPos.x;
+
+    mPos.y += mVelY * 2;
+    mCollider.y = mPos.y;
+
+    angle += SPIN_SPEED;
 }
 
 void Enemy::updateVel(const Point& playerPos)
@@ -39,21 +84,15 @@ void Enemy::updateVel(const Point& playerPos)
     mVelY = ENEMY_VEL * (y / pytago(x, y));
 }
 
-int Enemy::playerDis(const Point& playerPos)
+void Enemy::move(const Point& playerPos)
 {
-    return pytago(playerPos.x - mPos.x, playerPos.y - mPos.y);
-}
+    if (mVelX < 0) flip = SDL_FLIP_HORIZONTAL;
+    else if (mVelX > 0) flip = SDL_FLIP_NONE;
 
-void Enemy::move(const Point& playerPos, const SDL_Rect& playerCollider)
-{
-    updateVel(playerPos);
-
-    if (checkCollision(mCollider, playerCollider)) gotHit = true;
-
-    if (playerDis(playerPos) > 100 && !gotHit)
+    if (distance(playerPos, mPos) > 100 && mHP > 0)
     {
-        if (mVelX < 0) flip = SDL_FLIP_HORIZONTAL;
-        else if (mVelX > 0) flip = SDL_FLIP_NONE;
+        updateVel(playerPos);
+        angle = 0;
 
         mPos.x += mVelX;
         mCollider.x = mPos.x;
@@ -61,11 +100,41 @@ void Enemy::move(const Point& playerPos, const SDL_Rect& playerCollider)
         mPos.y += mVelY;
         mCollider.y = mPos.y;
     }
+    else
+    {
+        attack();
+    }
 }
 
-void Enemy::render(LTexture& gEnemyTexture, LTexture& gRedSlash, const SDL_Rect& camera)
+void Enemy::renderParticles(LTexture& gRedTexture, const SDL_Rect& camera)
 {
-    gEnemyTexture.render(renderer, mPos.x - camera.x, mPos.y - camera.y, NULL, 0.0, 0, flip);
-    if (gotHit) gRedSlash.render(renderer, mPos.x - PLAYER_WIDTH / 2 - camera.x, mPos.y - PLAYER_HEIGHT / 2 - camera.y, NULL, 0.0, 0, flip);
+    if (!hasParticle) {
+        for (int i = 0; i < TOTAL_PARTICLES; ++i)
+        {
+            particles[i] = new Particle(mPos.x, mPos.y, gRedTexture);
+        }
+        hasParticle = true;
+    }
+    for (int i = 0; i < 20; ++i)
+    {
+        if (!particles[i]->isDead()) particles[i]->render(renderer, camera);
+    }
+}
+
+void Enemy::render(LTexture& gEnemyTexture, LTexture& gRedTexture, LTexture& gRedSlash, const SDL_Rect& camera)
+{
+    if (isAlive)
+    {
+        gEnemyTexture.render(renderer, mPos.x - camera.x, mPos.y - camera.y, NULL, angle, 0, flip);
+        if (gotHit)
+        {
+            gRedSlash.render(renderer, mPos.x - PLAYER_WIDTH / 2 - camera.x, mPos.y - PLAYER_HEIGHT / 2 - camera.y, NULL, 0.0, 0, flip);
+            gotHit = false;
+        }
+    }
+    else
+    {
+        renderParticles(gRedTexture, camera);
+    }
 }
 
