@@ -29,15 +29,16 @@ public:
 	void updateVel(const int& x, const int& y);
 	void updateForce();
 
-	void render(LTexture& gPlayerTexture, LTexture& gRedTexture, LTexture& gBlueSlash, const SDL_Rect& camera);
+	void render(LTexture& gPlayerTexture, LTexture& gRedTexture, LTexture& gBlueSlash, LTexture& gRedSword, LTexture& gRedCircle, const SDL_Rect& camera);
 	void renderParticles(LTexture& gRedTexture, const SDL_Rect& camera);
+
+	void die();
 
 	Point getPos() { return mPos; }
 	SDL_Rect getCollider() { return mCollider; }
 	int getForce() { return mForce; }
-	bool isMoving() { return (mVelX != 0) || (mVelY != 0); }
-
 	int getHP() { return mHP; }
+	bool isMoving() { return (mVelX != 0) || (mVelY != 0); }
 
 private:
 	SDL_Renderer* renderer;
@@ -47,6 +48,7 @@ private:
 	int mVelX, mVelY;
 	int mForce;
 	SDL_Rect mCollider;
+	double swordAngle = 0;
 
 	int mHP;
 	bool gotHit;

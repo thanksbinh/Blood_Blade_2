@@ -1,10 +1,10 @@
 #include "Particle.h"
 
-Particle::Particle(int x, int y, LTexture& gRedTexture)
+Particle::Particle(const SDL_Rect& area, LTexture& gRedTexture)
 {
     //Set offsets
-    mPosX = x + (rand() % 25);
-    mPosY = y + (rand() % 25);
+    mPosX = area.x + (rand() % area.w);
+    mPosY = area.y + (rand() % area.h);
 
     //Initialize animation
     mFrame = rand() % 5;

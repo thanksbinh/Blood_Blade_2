@@ -23,12 +23,13 @@ public:
 	Enemy(SDL_Renderer* gRenderer, LTexture& gRedTexture, const SDL_Rect& camera);
 	~Enemy();
 
+	void init(SDL_Renderer* gRenderer, LTexture& gRedTexture, const SDL_Rect& camera);
 	void spawn(const SDL_Rect& camera);
 
 	void react(const SDL_Rect& playerCollider, const bool playerIsMoving);
 	void attack();
 
-	void move(const Point& playerPos);
+	void move(const SDL_Rect& playerCollider);
 	void updateVel(const Point& playerPos);
 
 	void render(LTexture& gEnemyTexture, LTexture& gRedTexture, LTexture& gRedSlash, const SDL_Rect& camera);
@@ -46,7 +47,6 @@ private:
 	Point mPos;
 	int mVelX, mVelY;
 	SDL_Rect mCollider;
-	int angle = 0;
 
 	int mHP;
 	bool gotHit;
@@ -56,7 +56,8 @@ private:
 
 	LTimer mTime;
 
-	SDL_RendererFlip flip = SDL_FLIP_NONE;
+	int bodyAngle = 0;
+	SDL_RendererFlip bodyFlip = SDL_FLIP_NONE;
 };
 
 #endif // !ENEMY_H_

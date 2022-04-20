@@ -13,6 +13,7 @@ public:
 	int y;
 	Point() { x = 0; y = 0; }
 	Point(int _x, int _y) { x = _x; y = _y; }
+	void init(int _x, int _y) { x = _x; y = _y; }
 };
 
 bool checkCollision(SDL_Rect a, SDL_Rect b);

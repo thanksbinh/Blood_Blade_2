@@ -8,7 +8,7 @@ class Particle
 {
 public:
 	//Initialize position and animation
-	Particle(int x, int y, LTexture& gRedTexture);
+	Particle(const SDL_Rect& area, LTexture& gRedTexture);
 
 	//Shows the particle
 	void render(SDL_Renderer* gRenderer, const SDL_Rect& camera);

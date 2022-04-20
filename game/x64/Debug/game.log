@@ -1,1 +1,15 @@
-﻿  game.vcxproj -> C:\Users\binh1\Desktop\Blood_Blade_2\game\x64\Debug\game.exe
+﻿  Enemy.cpp
+C:\Users\binh1\Desktop\Blood_Blade_2\game\Enemy.cpp(100,40): warning C4244: 'argument': conversion from 'double' to 'int', possible loss of data
+C:\Users\binh1\Desktop\Blood_Blade_2\game\Enemy.cpp(100,37): warning C4244: 'argument': conversion from 'double' to 'int', possible loss of data
+C:\Users\binh1\Desktop\Blood_Blade_2\game\Enemy.cpp(100,23): warning C4244: '=': conversion from 'double' to 'int', possible loss of data
+C:\Users\binh1\Desktop\Blood_Blade_2\game\Enemy.cpp(101,40): warning C4244: 'argument': conversion from 'double' to 'int', possible loss of data
+C:\Users\binh1\Desktop\Blood_Blade_2\game\Enemy.cpp(101,37): warning C4244: 'argument': conversion from 'double' to 'int', possible loss of data
+C:\Users\binh1\Desktop\Blood_Blade_2\game\Enemy.cpp(101,23): warning C4244: '=': conversion from 'double' to 'int', possible loss of data
+  Player.cpp
+C:\Users\binh1\Desktop\Blood_Blade_2\game\Player.cpp(11,1): warning C4005: 'M_PI': macro redefinition
+C:\vclib\SDL2-2.0.20\include\SDL_stdinc.h(568): message : see previous definition of 'M_PI'
+C:\Users\binh1\Desktop\Blood_Blade_2\game\Player.cpp(84,36): warning C4244: '=': conversion from 'double' to 'int', possible loss of data
+C:\Users\binh1\Desktop\Blood_Blade_2\game\Player.cpp(85,36): warning C4244: '=': conversion from 'double' to 'int', possible loss of data
+  main.cpp
+  Generating Code...
+  game.vcxproj -> C:\Users\binh1\Desktop\Blood_Blade_2\game\x64\Debug\game.exe

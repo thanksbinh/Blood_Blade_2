@@ -22,9 +22,11 @@ LTexture gPlayerTexture;
 LTexture gEnemyTexture;
 LTexture gTimeTextTexture;
 LTexture gPromptTextTexture;
-LTexture gRedTexture;
+LTexture gRedDot;
 LTexture gRedSlash;
 LTexture gBlueSlash;
+LTexture gRedSword;
+LTexture gRedCircle;
 
 //const int WALKING_ANIMATION_FRAMES = 8;
 //SDL_Rect gSpriteClips[WALKING_ANIMATION_FRAMES];
@@ -61,18 +63,17 @@ int main(int argc, char* args[])
 			//The camera area
 			SDL_Rect camera = { 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT };
 
-			Player player(gRenderer, gRedTexture, camera);
-			Enemy enemy(gRenderer, gRedTexture, camera);
+			//Score = enemy killed
+			int score = 0;
 
-			//Enemy enemy[] = { Enemy(gRenderer, gRedTexture, camera), Enemy(gRenderer, gRedTexture, camera), Enemy(gRenderer, gRedTexture, camera), Enemy(gRenderer, gRedTexture, camera), Enemy(gRenderer, gRedTexture, camera) };
-
-			/*Enemy* enemy = new Enemy[TOTAL_ENEMY];
+			Player player(gRenderer, gRedDot, camera);
+			Enemy* enemy = new Enemy[TOTAL_ENEMY];
 			for (int i = 0; i < TOTAL_ENEMY; i++)
 			{
-				enemy[i] = Enemy(gRenderer, gRedTexture, camera);
-			}*/
+				enemy[i].init(gRenderer, gRedDot, camera);
+			}
 			
-			while (!quit && player.getHP() > 0)
+			while (!quit)
 			{
 				while (SDL_PollEvent(&e) != 0)
 				{
@@ -83,24 +84,24 @@ int main(int argc, char* args[])
 					player.handleEvent(e, camera);
 				}
 				player.move();
-				enemy.move(player.getPos());
-
-				/*for (int i = 0; i < TOTAL_ENEMY; i++)
+				for (int i = 0; i < TOTAL_ENEMY && i < score / 5 + 1; i++)
 				{
-					enemy[i].move(player.getPos());
-					enemy[i].handlePlayer(player.getCollider(), player.isMoving());
-					if (!enemy[i].getIsAppear()) enemy[i].spawn(camera);
-				}*/
+					enemy[i].move(player.getCollider());
 
-				player.react(enemy.getCollider());
-				enemy.react(player.getCollider(), player.isMoving());
-				
-				//Respawn enemy 1s after dead
-				if (!enemy.getIsAppear()) enemy.spawn(camera);
+					player.react(enemy[i].getCollider());
+					enemy[i].react(player.getCollider(), player.isMoving());
+					
+					//Respawn enemy 1s after dead
+					if (!enemy[i].getIsAppear())
+					{
+						enemy[i].spawn(camera);
+						score++;
+					}
+				}
 
 				//Text
 				timeText.str("");
-				timeText << "PLAYER'S HP: " << player.getHP();
+				timeText << " SCORE: " << score << " PLAYER'S HP: " << player.getHP();
 
 				if (!gTimeTextTexture.loadFromRenderedText(gRenderer, gFont, timeText.str().c_str(), textColor))
 				{
@@ -124,12 +125,11 @@ int main(int argc, char* args[])
 				gBGTexture.render(gRenderer, 0, 0, &camera);
 
 				//Render characters
-				player.render(gPlayerTexture, gRedTexture, gBlueSlash, camera);
-				enemy.render(gEnemyTexture, gRedTexture, gRedSlash, camera);
-				/*for (int i = 0; i < TOTAL_ENEMY; i++)
+				player.render(gPlayerTexture, gRedDot, gBlueSlash, gRedSword, gRedCircle, camera);
+				for (int i = 0; i < TOTAL_ENEMY && i < score / 5 + 1; i++)
 				{
-					enemy[i].render(gEnemyTexture, gRedTexture, gRedSlash, camera);
-				}*/
+					enemy[i].render(gEnemyTexture, gRedDot, gRedSlash, camera);
+				}
 
 				//Render text
 				gPromptTextTexture.render(gRenderer, (SCREEN_WIDTH - gPromptTextTexture.getWidth()) / 2, 0);
@@ -137,8 +137,12 @@ int main(int argc, char* args[])
 
 				SDL_RenderPresent(gRenderer);
 			}
+
+			std::cerr << "Your score: " << score << std::endl;
+
 		}
 	}
+
 	close();
 
 	return 0;
@@ -218,7 +222,7 @@ bool loadMedia()
 	}
 
 	//Load red texture
-	if (!gRedTexture.loadFromFile(gRenderer, "assets/red.bmp", 5, 5))
+	if (!gRedDot.loadFromFile(gRenderer, "assets/red.bmp", 5, 5))
 	{
 		printf("Failed to load red texture!\n");
 		success = false;
@@ -227,14 +231,28 @@ bool loadMedia()
 	//Load red slash
 	if (!gRedSlash.loadFromFile(gRenderer, "assets/red-slash.png", PLAYER_WIDTH * 2, PLAYER_HEIGHT * 2))
 	{
-		printf("Failed to load red texture!\n");
+		printf("Failed to load red slash!\n");
 		success = false;
 	}
 
 	//Load blue slash
 	if (!gBlueSlash.loadFromFile(gRenderer, "assets/blue-slash.png", PLAYER_WIDTH * 2, PLAYER_HEIGHT * 2))
 	{
-		printf("Failed to load red texture!\n");
+		printf("Failed to load blue slash!\n");
+		success = false;
+	}
+
+	//Load red sword
+	if (!gRedSword.loadFromFile(gRenderer, "assets/red-sword.png", PLAYER_WIDTH * 3, PLAYER_HEIGHT * 3))
+	{
+		printf("Failed to load red sword!\n");
+		success = false;
+	}
+
+	//Load red circle
+	if (!gRedCircle.loadFromFile(gRenderer, "assets/red-circle.png", PLAYER_WIDTH / 2, PLAYER_HEIGHT / 2))
+	{
+		printf("Failed to load red circle!\n");
 		success = false;
 	}
 
@@ -246,9 +264,10 @@ bool loadMedia()
 	}
 
 	//Set texture transparency
-	gRedTexture.setAlpha(192);
+	gRedDot.setAlpha(192);
 	gRedSlash.setAlpha(192);
 	gBlueSlash.setAlpha(192);
+	gRedCircle.setAlpha(96);
 
 	if (!gEnemyTexture.loadFromFile(gRenderer, "assets/rogue.png", PLAYER_WIDTH, PLAYER_HEIGHT))
 	{
@@ -289,9 +308,11 @@ void close()
 	gTimeTextTexture.free();
 	gPromptTextTexture.free();
 
-	gRedTexture.free();
+	gRedDot.free();
 	gRedSlash.free();
 	gBlueSlash.free();
+	gRedSword.free();
+	gRedCircle.free();
 
 	//Free global font
 	TTF_CloseFont(gFont);

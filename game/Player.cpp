@@ -6,29 +6,26 @@
 #include <SDL_ttf.h>
 
 #define FORCE_SPEED 1/10
-#define FORCE_SPEED_CAPABILITY 100
+#define FORCE_CAPABILITY 100
 #define FORCE_LOSS 2
-#define AREA_CLOSE_ATTACK 25
+#define M_PI 3.14159265358979323846
 
 Player::Player(SDL_Renderer* gRenderer, LTexture& gRedTexture, const SDL_Rect& camera)
 {
     renderer = gRenderer;
 
-    mCollider.x = mPos.x = LEVEL_WIDTH / 2;
-    mCollider.y = mPos.y = LEVEL_HEIGHT / 2;
-    mCollider.w = PLAYER_WIDTH + AREA_CLOSE_ATTACK * 2;
-    mCollider.h = PLAYER_HEIGHT + AREA_CLOSE_ATTACK * 2;
-
+    mPos.init(LEVEL_WIDTH / 2, LEVEL_HEIGHT / 2);
+    mCollider = { mPos.x, mPos.y, PLAYER_WIDTH, PLAYER_HEIGHT };
     mForce = mVelX = mVelY = 0;
 
+    mHP = PLAYER_MAX_HP;
     gotHit = false;
     isAlive = true;
     isAppear = true;
-    mHP = PLAYER_MAX_HP;
 
     for (int i = 0; i < TOTAL_PARTICLES; ++i)
     {
-        particles[i] = new Particle(mPos.x, mPos.y, gRedTexture);
+        particles[i] = new Particle(mCollider, gRedTexture);
     }
 }
 
@@ -45,20 +42,20 @@ Player::~Player()
 
 void Player::handleEvent(SDL_Event& e, const SDL_Rect& camera)
 {
+    swordAngle = SDL_atan2((initPos.y - lastPos.y), (initPos.x - lastPos.x)) * (180.0 / M_PI) + 90;
+    
     if (e.type == SDL_MOUSEBUTTONDOWN && !isHold)
     {
         SDL_GetMouseState(&initPos.x, &initPos.y);
-        //Add arrow
-        if (1 || mPos.x - camera.x < initPos.x && initPos.x < mPos.x - camera.x + PLAYER_WIDTH && mPos.y - camera.y < initPos.y && initPos.y < mPos.y - camera.y + PLAYER_HEIGHT)
-        {
-            mTime.start();
-            isHold = true;
-        }
+        //if (mPos.x - camera.x < initPos.x && initPos.x < mPos.x - camera.x + PLAYER_WIDTH && mPos.y - camera.y < initPos.y && initPos.y < mPos.y - camera.y + PLAYER_HEIGHT)
+        isHold = true;
+        mTime.start();
     }
-    else if (e.type == SDL_MOUSEBUTTONUP && isHold) {
-        isHold = false;
-        SDL_GetMouseState(&lastPos.x, &lastPos.y);
+    SDL_GetMouseState(&lastPos.x, &lastPos.y);
+    if (e.type == SDL_MOUSEBUTTONUP && isHold) {
         updateVel((initPos.x - lastPos.x), (initPos.y - lastPos.y));
+        isHold = false;
+        mTime.stop();
 
         std::cerr << "Final remainVel " << mForce << std::endl;
     }
@@ -66,23 +63,19 @@ void Player::handleEvent(SDL_Event& e, const SDL_Rect& camera)
 
 void Player::react(const SDL_Rect& enemyCollider)
 {
-    if (!isMoving() && checkCollision(mCollider, enemyCollider))
+    if (isAlive)
     {
-        gotHit = true;
-        mHP--;
-        std::cerr << mVelX << " " << mVelY << std::endl;
-    }
+        if (!isMoving() && checkCollision(mCollider, enemyCollider))
+        {
+            gotHit = true;
+            mHP--;
+            std::cerr << mVelX << " " << mVelY << std::endl;
+        }
 
-    if (mHP <= 0)
-    {
-        isAlive = false;
-        if (!mTime.isStarted()) mTime.start();
-    }
-
-    if (!isAlive && mTime.getTicks() > 1000)
-    {
-        isAppear = false;
-        mTime.stop();
+        if (mHP <= 0)
+        {
+            die();
+        }
     }
 }
 
@@ -96,43 +89,46 @@ void Player::updateForce()
 {
     if (isHold)
     {
-        mForce = (mTime.getTicks() * FORCE_SPEED) % (2 * FORCE_SPEED_CAPABILITY);
-        if (mForce > FORCE_SPEED_CAPABILITY) mForce = 2 * FORCE_SPEED_CAPABILITY - mForce;
+        mForce = (mTime.getTicks() * FORCE_SPEED) % (2 * FORCE_CAPABILITY);
+        if (mForce > FORCE_CAPABILITY) mForce = 2 * FORCE_CAPABILITY - mForce;
     }
 }
 
 void Player::move()
 {
-    if (mVelX < 0) flip = SDL_FLIP_HORIZONTAL;
-    else if (mVelX > 0) flip = SDL_FLIP_NONE;
-
-    updateForce();
-
-    if (mForce > 0)
+    if (isAlive)
     {
-        mPos.x += mVelX;
-        mCollider.x = mPos.x - AREA_CLOSE_ATTACK;
-        
-        mPos.y += mVelY;
-        mCollider.y = mPos.y - AREA_CLOSE_ATTACK;
+        if (mVelX < 0) flip = SDL_FLIP_HORIZONTAL;
+        else if (mVelX > 0) flip = SDL_FLIP_NONE;
 
-        if ((mPos.x < 0) || (mPos.x + PLAYER_WIDTH > LEVEL_WIDTH))
+        updateForce();
+
+        if (mForce > 0)
         {
-            mVelX = -mVelX;
-            mForce += FORCE_LOSS;
-        }
+            mPos.x += mVelX;
+            mCollider.x = mPos.x;
 
-        if ((mPos.y < 0) || (mPos.y + PLAYER_HEIGHT > LEVEL_HEIGHT))
+            mPos.y += mVelY;
+            mCollider.y = mPos.y;
+
+            if ((mPos.x < 0) || (mPos.x + PLAYER_WIDTH > LEVEL_WIDTH))
+            {
+                mVelX = -mVelX;
+                mForce += FORCE_LOSS;
+            }
+
+            if ((mPos.y < 0) || (mPos.y + PLAYER_HEIGHT > LEVEL_HEIGHT))
+            {
+                mVelY = -mVelY;
+                mForce += FORCE_LOSS;
+            }
+
+            mForce -= FORCE_LOSS;
+        }
+        else
         {
-            mVelY = -mVelY;
-            mForce += FORCE_LOSS;
+            mForce = mVelX = mVelY = 0;
         }
-
-        mForce -= FORCE_LOSS;
-    }
-    else
-    {
-        mForce = mVelX = mVelY = 0;
     }
 }
 
@@ -143,7 +139,7 @@ void Player::renderParticles(LTexture& gRedTexture, const SDL_Rect& camera)
         if (particles[i]->isDead())
         {
             delete particles[i];
-            particles[i] = new Particle(mPos.x, mPos.y, gRedTexture);
+            particles[i] = new Particle(mCollider, gRedTexture);
         }
     }
 
@@ -153,7 +149,14 @@ void Player::renderParticles(LTexture& gRedTexture, const SDL_Rect& camera)
     }
 }
 
-void Player::render(LTexture& gPlayerTexture, LTexture& gRedTexture, LTexture& gBlueSlash, const SDL_Rect& camera)
+void Player::die()
+{
+    isAlive = false;
+    mCollider.y = -500;
+    mForce = FORCE_CAPABILITY;
+}
+
+void Player::render(LTexture& gPlayerTexture, LTexture& gRedTexture, LTexture& gBlueSlash, LTexture& gRedSword, LTexture& gRedCircle, const SDL_Rect& camera)
 {
     if (isAlive)
     {
@@ -163,11 +166,16 @@ void Player::render(LTexture& gPlayerTexture, LTexture& gRedTexture, LTexture& g
             gBlueSlash.render(renderer, mPos.x - PLAYER_WIDTH / 2 - camera.x, mPos.y - PLAYER_HEIGHT / 2 - camera.y, NULL, 0.0, 0, flip);
             gotHit = false;
         }
+        if (isHold)
+        {
+            //Show mouse position when holding
+            gRedCircle.render(renderer, initPos.x - PLAYER_WIDTH/4, initPos.y - PLAYER_HEIGHT/4);
+            gRedCircle.render(renderer, lastPos.x - PLAYER_WIDTH/4, lastPos.y - PLAYER_HEIGHT/4);
+            //Show player direction
+            gRedSword.render(renderer, mPos.x - camera.x - PLAYER_WIDTH, mPos.y - camera.y - PLAYER_HEIGHT, NULL, swordAngle, 0);
+        }
     }
-    else
-    {
-        //finality
-    }
+
     renderParticles(gRedTexture, camera);
 }
 
