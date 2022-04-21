@@ -47,9 +47,11 @@ void Player::handleEvent(SDL_Event& e, const SDL_Rect& camera)
     if (e.type == SDL_MOUSEBUTTONDOWN && !isHold)
     {
         SDL_GetMouseState(&initPos.x, &initPos.y);
-        //if (mPos.x - camera.x < initPos.x && initPos.x < mPos.x - camera.x + PLAYER_WIDTH && mPos.y - camera.y < initPos.y && initPos.y < mPos.y - camera.y + PLAYER_HEIGHT)
-        isHold = true;
-        mTime.start();
+        if (mPos.x - camera.x < initPos.x && initPos.x < mPos.x - camera.x + PLAYER_WIDTH && mPos.y - camera.y < initPos.y && initPos.y < mPos.y - camera.y + PLAYER_HEIGHT)
+        {
+            isHold = true;
+            mTime.start();
+        }
     }
     SDL_GetMouseState(&lastPos.x, &lastPos.y);
     if (e.type == SDL_MOUSEBUTTONUP && isHold) {
@@ -61,11 +63,11 @@ void Player::handleEvent(SDL_Event& e, const SDL_Rect& camera)
     }
 }
 
-void Player::react(const SDL_Rect& enemyCollider)
+void Player::react(const SDL_Rect& enemyCollider, const bool& enemyAttack)
 {
     if (isAlive)
     {
-        if (!isMoving() && checkCollision(mCollider, enemyCollider))
+        if (!getIsAttack() && enemyAttack && checkCollision(mCollider, enemyCollider))
         {
             gotHit = true;
             mHP--;
@@ -168,7 +170,7 @@ void Player::render(LTexture& gPlayerTexture, LTexture& gRedTexture, LTexture& g
         }
         if (isHold)
         {
-            //Show mouse position when holding
+            //Show red cicle at mouse position
             gRedCircle.render(renderer, initPos.x - PLAYER_WIDTH/4, initPos.y - PLAYER_HEIGHT/4);
             gRedCircle.render(renderer, lastPos.x - PLAYER_WIDTH/4, lastPos.y - PLAYER_HEIGHT/4);
             //Show player direction

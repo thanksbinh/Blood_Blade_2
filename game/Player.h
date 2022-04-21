@@ -23,7 +23,7 @@ public:
 	~Player();
 
 	void handleEvent(SDL_Event& e, const SDL_Rect& camera);
-	void react(const SDL_Rect& enemyCollider);
+	void react(const SDL_Rect& enemyCollider, const bool& enemyAttack);
 
 	void move();
 	void updateVel(const int& x, const int& y);
@@ -38,7 +38,7 @@ public:
 	SDL_Rect getCollider() { return mCollider; }
 	int getForce() { return mForce; }
 	int getHP() { return mHP; }
-	bool isMoving() { return (mVelX != 0) || (mVelY != 0); }
+	bool getIsAttack() { return (mVelX != 0) || (mVelY != 0); }
 
 private:
 	SDL_Renderer* renderer;

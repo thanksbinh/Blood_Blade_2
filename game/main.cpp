@@ -11,6 +11,8 @@
 #include "Others.h"
 #include "Player.h"
 #include "Enemy.h"
+#include "Rogue.h"
+#include "Knight.h"
 #include "LTimer.h"
 
 SDL_Window* gWindow = NULL;
@@ -19,7 +21,9 @@ TTF_Font* gFont = NULL;
 
 LTexture gBGTexture;
 LTexture gPlayerTexture;
-LTexture gEnemyTexture;
+LTexture gRogueTexture;
+LTexture gKnightTexture;
+
 LTexture gTimeTextTexture;
 LTexture gPromptTextTexture;
 LTexture gRedDot;
@@ -27,10 +31,6 @@ LTexture gRedSlash;
 LTexture gBlueSlash;
 LTexture gRedSword;
 LTexture gRedCircle;
-
-//const int WALKING_ANIMATION_FRAMES = 8;
-//SDL_Rect gSpriteClips[WALKING_ANIMATION_FRAMES];
-//LTexture gSpriteSheetTexture;
 
 bool init();
 bool loadMedia();
@@ -54,7 +54,7 @@ int main(int argc, char* args[])
 
 			SDL_Event e;
 
-			//Set text color as black
+			//Set text color as white
 			SDL_Color textColor = { 255, 255, 255, 255 };
 
 			//In memory text stream
@@ -67,10 +67,11 @@ int main(int argc, char* args[])
 			int score = 0;
 
 			Player player(gRenderer, gRedDot, camera);
-			Enemy* enemy = new Enemy[TOTAL_ENEMY];
+			//Enemy* enemy = new Rogue[TOTAL_ENEMY];
+			Enemy* enemy = new Knight[TOTAL_ENEMY];
 			for (int i = 0; i < TOTAL_ENEMY; i++)
 			{
-				enemy[i].init(gRenderer, gRedDot, camera);
+				enemy[i].init(gRenderer, camera);
 			}
 			
 			while (!quit)
@@ -88,13 +89,13 @@ int main(int argc, char* args[])
 				{
 					enemy[i].move(player.getCollider());
 
-					player.react(enemy[i].getCollider());
-					enemy[i].react(player.getCollider(), player.isMoving());
+					player.react(enemy[i].getCollider(), enemy[i].getIsAttack());
+					enemy[i].react(player.getCollider(), player.getIsAttack());
 					
 					//Respawn enemy 1s after dead
 					if (!enemy[i].getIsAppear())
 					{
-						enemy[i].spawn(camera);
+						enemy[i].respawn(camera);
 						score++;
 					}
 				}
@@ -103,6 +104,10 @@ int main(int argc, char* args[])
 				timeText.str("");
 				timeText << " SCORE: " << score << " PLAYER'S HP: " << player.getHP();
 
+				if (!gPromptTextTexture.loadFromRenderedText(gRenderer, gFont, "Click, drag and release to move.", textColor))
+				{
+					printf("Failed to render text texture!\n");
+				}
 				if (!gTimeTextTexture.loadFromRenderedText(gRenderer, gFont, timeText.str().c_str(), textColor))
 				{
 					printf("Unable to render time texture!\n");
@@ -128,7 +133,8 @@ int main(int argc, char* args[])
 				player.render(gPlayerTexture, gRedDot, gBlueSlash, gRedSword, gRedCircle, camera);
 				for (int i = 0; i < TOTAL_ENEMY && i < score / 5 + 1; i++)
 				{
-					enemy[i].render(gEnemyTexture, gRedDot, gRedSlash, camera);
+					//enemy[i].render(gRogueTexture, gRedDot, gRedSlash, camera);
+					enemy[i].render(gKnightTexture, gRedDot, gRedSlash, camera);
 				}
 
 				//Render text
@@ -269,9 +275,15 @@ bool loadMedia()
 	gBlueSlash.setAlpha(192);
 	gRedCircle.setAlpha(96);
 
-	if (!gEnemyTexture.loadFromFile(gRenderer, "assets/rogue.png", PLAYER_WIDTH, PLAYER_HEIGHT))
+	if (!gRogueTexture.loadFromFile(gRenderer, "assets/rogue.png", ENEMY_WIDTH, ENEMY_HEIGHT))
 	{
-		printf("Failed to load dot texture!\n");
+		printf("Failed to load rogue texture!\n");
+		success = false;
+	}
+
+	if (!gKnightTexture.loadFromFile(gRenderer, "assets/knight.png", ENEMY_WIDTH, ENEMY_HEIGHT))
+	{
+		printf("Failed to load knight texture!\n");
 		success = false;
 	}
 
@@ -281,16 +293,6 @@ bool loadMedia()
 	{
 		printf("Failed to load lazy font! SDL_ttf Error: %s\n", TTF_GetError());
 		success = false;
-	}
-	else
-	{
-		//Render text
-		SDL_Color textColor = { 0, 0, 0 };
-		if (!gPromptTextTexture.loadFromRenderedText(gRenderer, gFont, "Click, drag and release to move.", textColor))
-		{
-			printf("Failed to render text texture!\n");
-			success = false;
-		}
 	}
 
 	return success;
@@ -304,7 +306,9 @@ void close()
 	//Free loaded images
 	gBGTexture.free();
 	gPlayerTexture.free();
-	gEnemyTexture.free();
+	gRogueTexture.free();
+	gKnightTexture.free();
+
 	gTimeTextTexture.free();
 	gPromptTextTexture.free();
 

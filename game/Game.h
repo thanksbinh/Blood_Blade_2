@@ -9,9 +9,13 @@ const int LEVEL_HEIGHT = 960;
 const int SCREEN_WIDTH = 640;
 const int SCREEN_HEIGHT = 480;
 
-//The dimensions of the dot
+//The dimensions of the player
 static const int PLAYER_WIDTH = 32;
 static const int PLAYER_HEIGHT = 32;
+
+//The dimensions of the enemy
+static const int ENEMY_WIDTH = 32;
+static const int ENEMY_HEIGHT = 32;
 
 //Particle count
 const int TOTAL_PARTICLES = 20;

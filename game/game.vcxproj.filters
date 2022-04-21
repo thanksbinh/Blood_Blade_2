@@ -39,6 +39,12 @@
     <ClCompile Include="Particle.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Rogue.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Knight.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Game.h">
@@ -60,6 +66,12 @@
       <Filter>Resource Files</Filter>
     </ClInclude>
     <ClInclude Include="Particle.h">
+      <Filter>Resource Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Rogue.h">
+      <Filter>Resource Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Knight.h">
       <Filter>Resource Files</Filter>
     </ClInclude>
   </ItemGroup>
