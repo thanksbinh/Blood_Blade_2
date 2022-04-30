@@ -1,10 +1,12 @@
 #include <SDL.h>
 #include <SDL_image.h>
 #include <SDL_ttf.h>
+#include <SDL_mixer.h>
 #include <stdio.h>
 #include <string>
 #include <sstream>
 #include <vector>
+#include <fstream>
 
 #include "LTexture.h"
 #include "Game.h"
@@ -12,7 +14,6 @@
 #include "Player.h"
 #include "Enemy.h"
 #include "Rogue.h"
-#include "Knight.h"
 #include "LTimer.h"
 
 SDL_Window* gWindow = NULL;
@@ -26,11 +27,21 @@ LTexture gKnightTexture;
 
 LTexture gTimeTextTexture;
 LTexture gPromptTextTexture;
+LTexture gDataTextures[TOTAL_DATA];
+
+//Data points
+int gData[TOTAL_DATA];
+
+//Effect, items
 LTexture gRedDot;
 LTexture gRedSlash;
 LTexture gBlueSlash;
 LTexture gRedSword;
 LTexture gRedCircle;
+
+//Music, sound effects
+Mix_Music* gMusic = NULL;
+Mix_Chunk* gSwordSlash = NULL;
 
 bool init();
 bool loadMedia();
@@ -54,8 +65,12 @@ int main(int argc, char* args[])
 
 			SDL_Event e;
 
-			//Set text color as white
+			//Text rendering color
 			SDL_Color textColor = { 255, 255, 255, 255 };
+			SDL_Color highlightColor = { 0xFF, 0, 0, 0xFF };
+
+			//Current input point
+			int currentData = 0;
 
 			//In memory text stream
 			std::stringstream timeText;
@@ -65,13 +80,14 @@ int main(int argc, char* args[])
 
 			//Score = enemy killed
 			int score = 0;
+			int rank = -1;
 
 			Player player(gRenderer, gRedDot, camera);
-			//Enemy* enemy = new Rogue[TOTAL_ENEMY];
-			Enemy* enemy = new Knight[TOTAL_ENEMY];
+
+			Enemy* enemy = new Rogue[TOTAL_ENEMY];
 			for (int i = 0; i < TOTAL_ENEMY; i++)
 			{
-				enemy[i].init(gRenderer, camera);
+				enemy[i].init(gRenderer, gRedDot, camera);
 			}
 			
 			while (!quit)
@@ -82,17 +98,34 @@ int main(int argc, char* args[])
 					{
 						quit = true;
 					}
+					//Handle key press
+					else if (e.type == SDL_KEYDOWN)
+					{
+						switch (e.key.keysym.sym)
+						{
+						case SDLK_r:
+							//Reset score board
+							for (int i = TOTAL_DATA - 1; i >= 0; --i)
+							{
+								gData[i] = 0;
+							}
+							break;
+						}
+					}
 					player.handleEvent(e, camera);
 				}
+
 				player.move();
+
 				for (int i = 0; i < TOTAL_ENEMY && i < score / 5 + 1; i++)
 				{
 					enemy[i].move(player.getCollider());
 
 					player.react(enemy[i].getCollider(), enemy[i].getIsAttack());
+					
 					enemy[i].react(player.getCollider(), player.getIsAttack());
 					
-					//Respawn enemy 1s after dead
+					//Respawn enemy
 					if (!enemy[i].getIsAppear())
 					{
 						enemy[i].respawn(camera);
@@ -113,6 +146,12 @@ int main(int argc, char* args[])
 					printf("Unable to render time texture!\n");
 				}
 
+				//Background music
+				if (Mix_PlayingMusic() == 0)
+				{
+					Mix_PlayMusic(gMusic, -1);
+				}
+
 				//Camera over the player
 				camera.x = (player.getPos().x + PLAYER_WIDTH / 2) - SCREEN_WIDTH / 2;
 				camera.y = (player.getPos().y + PLAYER_HEIGHT / 2) - SCREEN_HEIGHT / 2;
@@ -129,23 +168,45 @@ int main(int argc, char* args[])
 				//Render background
 				gBGTexture.render(gRenderer, 0, 0, &camera);
 
-				//Render characters
-				player.render(gPlayerTexture, gRedDot, gBlueSlash, gRedSword, gRedCircle, camera);
+				//Render player
+				player.render(gPlayerTexture, gRedDot, gBlueSlash, gRedSword, gRedCircle, camera, gSwordSlash);
+
+				//Render enemies
 				for (int i = 0; i < TOTAL_ENEMY && i < score / 5 + 1; i++)
 				{
-					//enemy[i].render(gRogueTexture, gRedDot, gRedSlash, camera);
-					enemy[i].render(gKnightTexture, gRedDot, gRedSlash, camera);
+					enemy[i].render(gRogueTexture, gRedDot, gRedSlash, camera, gSwordSlash);
 				}
 
 				//Render text
 				gPromptTextTexture.render(gRenderer, (SCREEN_WIDTH - gPromptTextTexture.getWidth()) / 2, 0);
 				gTimeTextTexture.render(gRenderer, (SCREEN_WIDTH - gTimeTextTexture.getWidth()) / 2, (SCREEN_HEIGHT - gTimeTextTexture.getHeight()));
+				if (!player.getIsAlive())
+				{
+					if (rank == -1)
+					{
+						//Rank calculation
+						for (int i = TOTAL_DATA - 1; i >= 0; --i)
+						{
+							if (score >= gData[i])
+							{
+								rank = i;
+								if (i != TOTAL_DATA - 1) gData[i + 1] = gData[i];
+								gData[i] = score;
+							}
+						}
+					}
 
+					for (int i = 0; i < TOTAL_DATA; ++i)
+					{
+						if (i == rank) gDataTextures[i].loadFromRenderedText(gRenderer, gFont, std::to_string(gData[i]), highlightColor);
+						else gDataTextures[i].loadFromRenderedText(gRenderer, gFont, std::to_string(gData[i]), textColor);
+						
+						gDataTextures[i].render(gRenderer, (SCREEN_WIDTH - gDataTextures[i].getWidth()) / 2, gPromptTextTexture.getHeight() + gDataTextures[0].getHeight() * i);
+					}
+				}
+				
 				SDL_RenderPresent(gRenderer);
 			}
-
-			std::cerr << "Your score: " << score << std::endl;
-
 		}
 	}
 
@@ -160,7 +221,7 @@ bool init()
 	bool success = true;
 
 	//Initialize SDL
-	if (SDL_Init(SDL_INIT_VIDEO) < 0)
+	if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO) < 0)
 	{
 		printf("SDL could not initialize! SDL Error: %s\n", SDL_GetError());
 		success = false;
@@ -208,6 +269,13 @@ bool init()
 					printf("SDL_ttf could not initialize! SDL_ttf Error: %s\n", TTF_GetError());
 					success = false;
 				}
+
+				//Initialize SDL_mixer
+				if (Mix_OpenAudio(44100, MIX_DEFAULT_FORMAT, 2, 2048) < 0)
+				{
+					printf("SDL_mixer could not initialize! SDL_mixer Error: %s\n", Mix_GetError());
+					success = false;
+				}
 			}
 		}
 	}
@@ -217,6 +285,10 @@ bool init()
 
 bool loadMedia()
 {
+	//Text rendering color
+	SDL_Color textColor = { 255, 255, 255, 255 };
+	SDL_Color highlightColor = { 0xFF, 0, 0, 0xFF };
+
 	//Loading success flag
 	bool success = true;
 
@@ -227,10 +299,10 @@ bool loadMedia()
 		success = false;
 	}
 
-	//Load red texture
+	//Load red dot
 	if (!gRedDot.loadFromFile(gRenderer, "assets/red.bmp", 5, 5))
 	{
-		printf("Failed to load red texture!\n");
+		printf("Failed to load red dot!\n");
 		success = false;
 	}
 
@@ -262,10 +334,24 @@ bool loadMedia()
 		success = false;
 	}
 
-	//Load press texture
+	//Load player texture
 	if (!gPlayerTexture.loadFromFile(gRenderer, "assets/player.png", PLAYER_WIDTH, PLAYER_HEIGHT))
 	{
-		printf("Failed to load dot texture!\n");
+		printf("Failed to load player texture!\n");
+		success = false;
+	}
+
+	//Load rogue texture
+	if (!gRogueTexture.loadFromFile(gRenderer, "assets/rogue.png", ENEMY_WIDTH, ENEMY_HEIGHT))
+	{
+		printf("Failed to load rogue texture!\n");
+		success = false;
+	}
+
+	//Load knight texture
+	if (!gKnightTexture.loadFromFile(gRenderer, "assets/knight.png", ENEMY_WIDTH, ENEMY_HEIGHT))
+	{
+		printf("Failed to load knight texture!\n");
 		success = false;
 	}
 
@@ -275,23 +361,78 @@ bool loadMedia()
 	gBlueSlash.setAlpha(192);
 	gRedCircle.setAlpha(96);
 
-	if (!gRogueTexture.loadFromFile(gRenderer, "assets/rogue.png", ENEMY_WIDTH, ENEMY_HEIGHT))
-	{
-		printf("Failed to load rogue texture!\n");
-		success = false;
-	}
-
-	if (!gKnightTexture.loadFromFile(gRenderer, "assets/knight.png", ENEMY_WIDTH, ENEMY_HEIGHT))
-	{
-		printf("Failed to load knight texture!\n");
-		success = false;
-	}
-
 	//Open the font
 	gFont = TTF_OpenFont("assets/lazy.ttf", 28);
 	if (gFont == NULL)
 	{
 		printf("Failed to load lazy font! SDL_ttf Error: %s\n", TTF_GetError());
+		success = false;
+	}
+
+	//Open file for reading in binary
+	SDL_RWops* file = SDL_RWFromFile("33_file_reading_and_writing/nums.bin", "r+b");
+
+	//File does not exist
+	if (file == NULL)
+	{
+		printf("Warning: Unable to open file! SDL Error: %s\n", SDL_GetError());
+
+		//Create file for writing
+		file = SDL_RWFromFile("33_file_reading_and_writing/nums.bin", "w+b");
+		if (file != NULL)
+		{
+			printf("New file created!\n");
+
+			//Initialize data
+			for (int i = 0; i < TOTAL_DATA; ++i)
+			{
+				gData[i] = 0;
+				SDL_RWwrite(file, &gData[i], sizeof(gData[0]), 1);
+			}
+
+			//Close file handler
+			SDL_RWclose(file);
+		}
+		else
+		{
+			printf("Error: Unable to create file! SDL Error: %s\n", SDL_GetError());
+			success = false;
+		}
+	}
+	//File exists
+	else
+	{
+		//Load data
+		printf("Reading file...!\n");
+		for (int i = 0; i < TOTAL_DATA; ++i)
+		{
+			SDL_RWread(file, &gData[i], sizeof(gData[0]), 1);
+		}
+
+		//Close file handler
+		SDL_RWclose(file);
+	}
+
+	//Initialize data textures
+	gDataTextures[0].loadFromRenderedText(gRenderer, gFont, std::to_string(gData[0]), highlightColor);
+	for (int i = 1; i < TOTAL_DATA; ++i)
+	{
+		gDataTextures[i].loadFromRenderedText(gRenderer, gFont, std::to_string(gData[i]), textColor);
+	}
+
+	//Load music
+	gMusic = Mix_LoadMUS("21_sound_effects_and_music/epic-cinematic-saga-trailer-myths.wav");
+	if (gMusic == NULL)
+	{
+		printf("Failed to load beat music! SDL_mixer Error: %s\n", Mix_GetError());
+		success = false;
+	}
+
+	//Load sound effect
+	gSwordSlash = Mix_LoadWAV("21_sound_effects_and_music/sword_slash.wav");
+	if (gSwordSlash == NULL)
+	{
+		printf("Failed to load medium sound effect! SDL_mixer Error: %s\n", Mix_GetError());
 		success = false;
 	}
 
@@ -301,9 +442,6 @@ bool loadMedia()
 void close()
 {
 	//Free loaded images
-	//gSpriteSheetTexture.free();
-
-	//Free loaded images
 	gBGTexture.free();
 	gPlayerTexture.free();
 	gRogueTexture.free();
@@ -311,16 +449,48 @@ void close()
 
 	gTimeTextTexture.free();
 	gPromptTextTexture.free();
-
 	gRedDot.free();
 	gRedSlash.free();
 	gBlueSlash.free();
 	gRedSword.free();
 	gRedCircle.free();
 
+	//Open data for writing
+	SDL_RWops* file = SDL_RWFromFile("33_file_reading_and_writing/nums.bin", "w+b");
+	if (file != NULL)
+	{
+		//Save data
+		for (int i = 0; i < TOTAL_DATA; ++i)
+		{
+			SDL_RWwrite(file, &gData[i], sizeof(gData[0]), 1);
+		}
+
+		//Close file handler
+		SDL_RWclose(file);
+	}
+	else
+	{
+		printf("Error: Unable to save file! %s\n", SDL_GetError());
+	}
+
+	//Free loaded images
+	gPromptTextTexture.free();
+	for (int i = 0; i < TOTAL_DATA; ++i)
+	{
+		gDataTextures[i].free();
+	}
+
 	//Free global font
 	TTF_CloseFont(gFont);
 	gFont = NULL;
+
+	//Free the sound effects
+	Mix_FreeChunk(gSwordSlash);
+	gSwordSlash = NULL;
+
+	//Free the music
+	Mix_FreeMusic(gMusic);
+	gMusic = NULL;
 
 	//Destroy window	
 	SDL_DestroyRenderer(gRenderer);

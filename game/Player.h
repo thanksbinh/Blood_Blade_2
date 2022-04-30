@@ -3,6 +3,7 @@
 
 #include <SDL.h>
 #include <SDL_image.h>
+#include <SDL_mixer.h>
 #include <stdio.h>
 #include <string>
 #include <iostream>
@@ -17,7 +18,7 @@ class Player
 {
 public:
 	static const int PLAYER_VEL = 20;
-	static const int PLAYER_MAX_HP = 50;
+	static const int PLAYER_MAX_HP = 100;
 
 	Player(SDL_Renderer* gRenderer, LTexture& gRedTexture, const SDL_Rect& camera);
 	~Player();
@@ -29,7 +30,7 @@ public:
 	void updateVel(const int& x, const int& y);
 	void updateForce();
 
-	void render(LTexture& gPlayerTexture, LTexture& gRedTexture, LTexture& gBlueSlash, LTexture& gRedSword, LTexture& gRedCircle, const SDL_Rect& camera);
+	void render(LTexture& gPlayerTexture, LTexture& gRedTexture, LTexture& gBlueSlash, LTexture& gRedSword, LTexture& gRedCircle, const SDL_Rect& camera, Mix_Chunk* gSwordSlash);
 	void renderParticles(LTexture& gRedTexture, const SDL_Rect& camera);
 
 	void die();
@@ -39,6 +40,7 @@ public:
 	int getForce() { return mForce; }
 	int getHP() { return mHP; }
 	bool getIsAttack() { return (mVelX != 0) || (mVelY != 0); }
+	bool getIsAlive() { return isAlive; }
 
 private:
 	SDL_Renderer* renderer;

@@ -21,7 +21,6 @@
   <ItemGroup>
     <ClCompile Include="Enemy.cpp" />
     <ClCompile Include="Game.cpp" />
-    <ClCompile Include="Knight.cpp" />
     <ClCompile Include="LTexture.cpp" />
     <ClCompile Include="LTimer.cpp" />
     <ClCompile Include="main.cpp" />
@@ -33,7 +32,6 @@
   <ItemGroup>
     <ClInclude Include="Enemy.h" />
     <ClInclude Include="Game.h" />
-    <ClInclude Include="Knight.h" />
     <ClInclude Include="LTexture.h" />
     <ClInclude Include="LTimer.h" />
     <ClInclude Include="Others.h" />
@@ -103,8 +101,8 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
-    <IncludePath>C:\vclib\SDL2_ttf-2.0.12\include;C:\vclib\SDL2-2.0.20\include;C:\vclib\SDL2_image-2.0.5\include;$(IncludePath)</IncludePath>
-    <LibraryPath>C:\vclib\SDL2_ttf-2.0.12\lib\x64;C:\vclib\SDL2-2.0.20\lib\x64;C:\vclib\SDL2_image-2.0.5\lib\x64;$(LibraryPath)</LibraryPath>
+    <IncludePath>C:\vclib\SDL2_mixer-2.0.4\include;C:\vclib\SDL2_ttf-2.0.12\include;C:\vclib\SDL2-2.0.20\include;C:\vclib\SDL2_image-2.0.5\include;$(IncludePath)</IncludePath>
+    <LibraryPath>C:\vclib\SDL2_mixer-2.0.4\lib\x64;C:\vclib\SDL2_ttf-2.0.12\lib\x64;C:\vclib\SDL2-2.0.20\lib\x64;C:\vclib\SDL2_image-2.0.5\lib\x64;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
@@ -148,7 +146,7 @@
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>SDL2_ttf.lib;SDL2.lib;SDL2main.lib;SDL2_image.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>SDL2_mixer.lib;SDL2_ttf.lib;SDL2.lib;SDL2main.lib;SDL2_image.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">

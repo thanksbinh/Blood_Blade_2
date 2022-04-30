@@ -14,7 +14,7 @@ Player::Player(SDL_Renderer* gRenderer, LTexture& gRedTexture, const SDL_Rect& c
 {
     renderer = gRenderer;
 
-    mPos.init(LEVEL_WIDTH / 2, LEVEL_HEIGHT / 2);
+    mPos.set(LEVEL_WIDTH / 2, LEVEL_HEIGHT / 2);
     mCollider = { mPos.x, mPos.y, PLAYER_WIDTH, PLAYER_HEIGHT };
     mForce = mVelX = mVelY = 0;
 
@@ -71,9 +71,7 @@ void Player::react(const SDL_Rect& enemyCollider, const bool& enemyAttack)
         {
             gotHit = true;
             mHP--;
-            std::cerr << mVelX << " " << mVelY << std::endl;
         }
-
         if (mHP <= 0)
         {
             die();
@@ -104,7 +102,6 @@ void Player::move()
         else if (mVelX > 0) flip = SDL_FLIP_NONE;
 
         updateForce();
-
         if (mForce > 0)
         {
             mPos.x += mVelX;
@@ -153,12 +150,16 @@ void Player::renderParticles(LTexture& gRedTexture, const SDL_Rect& camera)
 
 void Player::die()
 {
+    for (int i = 0; i < TOTAL_PARTICLES; ++i)
+    {
+        particles[i]->reset(mCollider);
+    }
     isAlive = false;
-    mCollider.y = -500;
+    mCollider.y = -9999;
     mForce = FORCE_CAPABILITY;
 }
 
-void Player::render(LTexture& gPlayerTexture, LTexture& gRedTexture, LTexture& gBlueSlash, LTexture& gRedSword, LTexture& gRedCircle, const SDL_Rect& camera)
+void Player::render(LTexture& gPlayerTexture, LTexture& gRedTexture, LTexture& gBlueSlash, LTexture& gRedSword, LTexture& gRedCircle, const SDL_Rect& camera, Mix_Chunk* gSwordSlash)
 {
     if (isAlive)
     {
@@ -166,6 +167,7 @@ void Player::render(LTexture& gPlayerTexture, LTexture& gRedTexture, LTexture& g
         if (gotHit)
         {
             gBlueSlash.render(renderer, mPos.x - PLAYER_WIDTH / 2 - camera.x, mPos.y - PLAYER_HEIGHT / 2 - camera.y, NULL, 0.0, 0, flip);
+            Mix_PlayChannel(-1, gSwordSlash, 0);
             gotHit = false;
         }
         if (isHold)
@@ -176,6 +178,8 @@ void Player::render(LTexture& gPlayerTexture, LTexture& gRedTexture, LTexture& g
             //Show player direction
             gRedSword.render(renderer, mPos.x - camera.x - PLAYER_WIDTH, mPos.y - camera.y - PLAYER_HEIGHT, NULL, swordAngle, 0);
         }
+        //Lose blood -> lose red
+        gPlayerTexture.setColor(255 * (mHP*1.0/PLAYER_MAX_HP), 255, 255);
     }
 
     renderParticles(gRedTexture, camera);

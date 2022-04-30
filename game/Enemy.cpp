@@ -1,13 +1,8 @@
 #include "Enemy.h"
-#include "Player.h"
-
-#define SPIN_SPEED 15
-#define TIME_BEFORE_DISAPPEAR 100
-#define PLAYER_SWORD_AREA 25
 
 Enemy::Enemy() 
 {
-    mPos.init(0, 0);
+    mPos.set(0, 0);
     mCollider = { 0, 0, ENEMY_WIDTH, ENEMY_HEIGHT };
     mVelX = mVelY = 0;
 
@@ -19,11 +14,11 @@ Enemy::Enemy()
     isAttack = false;
 }
 
-Enemy::Enemy(SDL_Renderer* gRenderer, const SDL_Rect& camera)
+Enemy::Enemy(SDL_Renderer* gRenderer, LTexture& gRedTexture, const SDL_Rect& camera)
 {
     renderer = gRenderer;
 
-    mPos.init(0, 0);
+    mPos.set(0, 0);
     mCollider = { 0, 0, ENEMY_WIDTH, ENEMY_HEIGHT };
     mVelX = mVelY = 0;
 
@@ -33,6 +28,12 @@ Enemy::Enemy(SDL_Renderer* gRenderer, const SDL_Rect& camera)
     isAppear = true;
     hasParticle = false;
     isAttack = false;
+
+    for (int i = 0; i < TOTAL_PARTICLES; ++i)
+    {
+        particles[i] = new Particle(mCollider, gRedTexture);
+    }
+    hasParticle = true;
 }
 
 Enemy::~Enemy()
@@ -46,9 +47,15 @@ Enemy::~Enemy()
     }
 }
 
-void Enemy::init(SDL_Renderer* gRenderer, const SDL_Rect& camera)
+void Enemy::init(SDL_Renderer* gRenderer, LTexture& gRedTexture, const SDL_Rect& camera)
 {
     renderer = gRenderer;
+
+    for (int i = 0; i < TOTAL_PARTICLES; ++i)
+    {
+        particles[i] = new Particle(mCollider, gRedTexture);
+    }
+    hasParticle = true;
 }
 
 void Enemy::respawn(const SDL_Rect& camera)
@@ -59,34 +66,39 @@ void Enemy::respawn(const SDL_Rect& camera)
     isAppear = true;
     hasParticle = false;
     isAttack = false;
-
+    //Respawn random in level, but not in camera
     do {
         mCollider.x = rand() % (LEVEL_WIDTH - ENEMY_WIDTH);
         mCollider.y = rand() % (LEVEL_HEIGHT - ENEMY_HEIGHT);
     } while (checkCollision(mCollider, camera));
-    mPos.init(mCollider.x, mCollider.y);
+    mPos.set(mCollider.x, mCollider.y);
 }
 
 void Enemy::react(const SDL_Rect& playerCollider, const bool& playerIsMoving)
 {
-    SDL_Rect playerAttackCollider = { playerCollider.x - PLAYER_SWORD_AREA, playerCollider.y - PLAYER_SWORD_AREA, 
-                                      playerCollider.w + 2 * PLAYER_SWORD_AREA, playerCollider.h + 2 * PLAYER_SWORD_AREA };
+    SDL_Rect playerAttackCollider = { playerCollider.x - ATTACK_AREA, playerCollider.y - ATTACK_AREA,
+                                      playerCollider.w + 2 * ATTACK_AREA, playerCollider.h + 2 * ATTACK_AREA };
 
     if (isAlive)
     {
+        //Take damage
         if (playerIsMoving && checkCollision(mCollider, playerAttackCollider))
         {
             gotHit = true;
             mHP--;
         }
-
+        //Die
         if (!playerIsMoving && mHP <= 0)
         {
             isAlive = false;
-            mTime.start();
+            for (int i = 0; i < TOTAL_PARTICLES; ++i)
+            {
+                particles[i]->reset(mCollider);
+            }
         }
     }
-    else if (mTime.getTicks() > TIME_BEFORE_DISAPPEAR)
+    //Gone
+    if (!isAlive && mTime.wait(TIME_BEFORE_DISAPPEAR))
     {
         isAppear = false;
         mTime.stop();
@@ -99,13 +111,14 @@ void Enemy::move(const SDL_Rect& playerCollider)
     {
         Point playerPos(playerCollider.x, playerCollider.y);
 
+        //Turn to player
         if (mVelX < 0) bodyFlip = SDL_FLIP_HORIZONTAL;
         else if (mVelX > 0) bodyFlip = SDL_FLIP_NONE;
 
         if (distance(playerPos, mPos) <= ATTACK_RANGE)
         {
-            if (!mTime.isStarted()) mTime.start();
-            if (mTime.getTicks() > TIME_BEFORE_ATTACK)
+            isAttack = true;
+            if (mTime.wait(TIME_BEFORE_ATTACK))
             {
                 attack();
             }
@@ -113,9 +126,9 @@ void Enemy::move(const SDL_Rect& playerCollider)
         else
         {
             isAttack = false;
+            mTime.stop();
             bodyAngle = 0;
 
-            //Move close to player
             updateVel(playerPos);
 
             mPos.x += mVelX;
@@ -123,8 +136,6 @@ void Enemy::move(const SDL_Rect& playerCollider)
 
             mPos.y += mVelY;
             mCollider.y = mPos.y;
-
-            mTime.stop();
         }
     }
     else 
@@ -144,40 +155,51 @@ void Enemy::updateVel(const Point& playerPos)
 
 void Enemy::attack()
 {
-    isAttack = true;
-
     mPos.x += mVelX * 2;
     mCollider.x = mPos.x;
 
     mPos.y += mVelY * 2;
     mCollider.y = mPos.y;
 
+    if ((mPos.x < 0) || (mPos.x + PLAYER_WIDTH > LEVEL_WIDTH))
+    {
+        mVelX = -mVelX;
+    }
+
+    if ((mPos.y < 0) || (mPos.y + PLAYER_HEIGHT > LEVEL_HEIGHT))
+    {
+        mVelY = -mVelY;
+    }
+
     bodyAngle += SPIN_SPEED;
 }
 
 void Enemy::renderParticles(LTexture& gRedTexture, const SDL_Rect& camera)
 {
-    if (!hasParticle) {
-        for (int i = 0; i < TOTAL_PARTICLES; ++i)
+    for (int i = 0; i < TOTAL_PARTICLES; ++i)
+    {
+        if (particles[i]->isDead())
         {
+            delete particles[i];
             particles[i] = new Particle(mCollider, gRedTexture);
         }
-        hasParticle = true;
     }
-    for (int i = 0; i < 20; ++i)
+
+    for (int i = 0; i < TOTAL_PARTICLES; ++i)
     {
-        if (!particles[i]->isDead()) particles[i]->render(renderer, camera);
+        particles[i]->render(renderer, camera);
     }
 }
 
-void Enemy::render(LTexture& gEnemyTexture, LTexture& gRedTexture, LTexture& gRedSlash, const SDL_Rect& camera)
+void Enemy::render(LTexture& gEnemyTexture, LTexture& gRedTexture, LTexture& gRedSlash, const SDL_Rect& camera, Mix_Chunk* gSwordSlash)
 {
     if (isAlive)
     {
         gEnemyTexture.render(renderer, mPos.x - camera.x, mPos.y - camera.y, NULL, bodyAngle, 0, bodyFlip);
         if (gotHit)
         {
-            gRedSlash.render(renderer, mPos.x - ENEMY_WIDTH / 2 - camera.x, mPos.y - ENEMY_HEIGHT / 2 - camera.y, NULL, 0.0, 0, bodyFlip);
+            gRedSlash.render(renderer, mPos.x - ENEMY_WIDTH / 2 - camera.x, mPos.y - ENEMY_HEIGHT / 2 - camera.y, NULL, rand(), 0, bodyFlip);
+            Mix_PlayChannel(-1, gSwordSlash, 0);
             gotHit = false;
         }
     }

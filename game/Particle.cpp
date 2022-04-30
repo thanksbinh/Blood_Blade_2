@@ -12,6 +12,13 @@ Particle::Particle(const SDL_Rect& area, LTexture& gRedTexture)
     mTexture = &gRedTexture;
 }
 
+void Particle::reset(const SDL_Rect& area)
+{
+    //Set offsets
+    mPosX = area.x + (rand() % area.w);
+    mPosY = area.y + (rand() % area.h);
+}
+
 void Particle::render(SDL_Renderer* gRenderer, const SDL_Rect& camera)
 {
     //Show image

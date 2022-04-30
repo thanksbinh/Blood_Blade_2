@@ -8,6 +8,7 @@ LTimer::LTimer()
 
     mPaused = false;
     mStarted = false;
+    mWait = false;
 }
 
 void LTimer::start()
@@ -30,6 +31,8 @@ void LTimer::stop()
 
     //Unpause the timer
     mPaused = false;
+
+    mWait = false;
 
     //Clear tick variables
     mStartTicks = 0;
@@ -64,6 +67,20 @@ void LTimer::unpause()
         //Reset the paused ticks
         mPausedTicks = 0;
     }
+}
+
+bool LTimer::wait(const int& millisecond)
+{
+    if (!mWait)
+    {
+        mWait = true;
+        start();
+    }
+    else if (getTicks() > millisecond)
+    {
+        return true;
+    }
+    return false;
 }
 
 Uint32 LTimer::getTicks()

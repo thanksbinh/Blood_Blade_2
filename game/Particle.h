@@ -10,6 +10,8 @@ public:
 	//Initialize position and animation
 	Particle(const SDL_Rect& area, LTexture& gRedTexture);
 
+	void reset(const SDL_Rect& area);
+
 	//Shows the particle
 	void render(SDL_Renderer* gRenderer, const SDL_Rect& camera);
 

@@ -22,6 +22,8 @@ public:
 	void pause();
 	void unpause();
 
+	bool wait(const int& millisecond);
+
 	//Gets the timer's time
 	Uint32 getTicks();
 
@@ -39,6 +41,7 @@ private:
 	//The timer status
 	bool mPaused;
 	bool mStarted;
+	bool mWait;
 };
 
 #endif // !LTIMER_H_
