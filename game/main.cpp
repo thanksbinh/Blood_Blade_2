@@ -8,13 +8,14 @@
 #include <vector>
 #include <fstream>
 
-#include "LTexture.h"
 #include "Game.h"
+#include "LTexture.h"
 #include "Others.h"
 #include "Player.h"
 #include "Enemy.h"
 #include "Rogue.h"
 #include "LTimer.h"
+//#include "Tile.h"
 
 SDL_Window* gWindow = NULL;
 SDL_Renderer* gRenderer = NULL;
@@ -24,6 +25,9 @@ LTexture gBGTexture;
 LTexture gPlayerTexture;
 LTexture gRogueTexture;
 LTexture gKnightTexture;
+
+LTexture gTileTexture;
+SDL_Rect gTileClips[TOTAL_TILE_SPRITES];
 
 LTexture gTimeTextTexture;
 LTexture gPromptTextTexture;
@@ -44,8 +48,8 @@ Mix_Music* gMusic = NULL;
 Mix_Chunk* gSwordSlash = NULL;
 
 bool init();
-bool loadMedia();
-void close();
+bool loadMedia(Tile* tiles[]);
+void close(Tile* tiles[]);
 
 int main(int argc, char* args[])
 {
@@ -55,7 +59,10 @@ int main(int argc, char* args[])
 	}
 	else
 	{
-		if (!loadMedia())
+		//The level tiles
+		Tile* tileSet[TOTAL_TILES];
+
+		if (!loadMedia(tileSet))
 		{
 			printf("Failed to load media!\n");
 		}
@@ -115,11 +122,12 @@ int main(int argc, char* args[])
 					player.handleEvent(e, camera);
 				}
 
-				player.move();
+				player.move(tileSet);
+				player.setCamera(camera);
 
 				for (int i = 0; i < TOTAL_ENEMY && i < score / 5 + 1; i++)
 				{
-					enemy[i].move(player.getCollider());
+					enemy[i].move(player.getCollider(), tileSet);
 
 					player.react(enemy[i].getCollider(), enemy[i].getIsAttack());
 					
@@ -128,7 +136,7 @@ int main(int argc, char* args[])
 					//Respawn enemy
 					if (!enemy[i].getIsAppear())
 					{
-						enemy[i].respawn(camera);
+						enemy[i].respawn(tileSet, camera);
 						score++;
 					}
 				}
@@ -152,21 +160,18 @@ int main(int argc, char* args[])
 					Mix_PlayMusic(gMusic, -1);
 				}
 
-				//Camera over the player
-				camera.x = (player.getPos().x + PLAYER_WIDTH / 2) - SCREEN_WIDTH / 2;
-				camera.y = (player.getPos().y + PLAYER_HEIGHT / 2) - SCREEN_HEIGHT / 2;
-
-				if (camera.x < 0) camera.x = 0;
-				if (camera.y < 0) camera.y = 0;
-				if (camera.x > LEVEL_WIDTH - camera.w) camera.x = LEVEL_WIDTH - camera.w;
-				if (camera.y > LEVEL_HEIGHT - camera.h) camera.y = LEVEL_HEIGHT - camera.h;
-
 				//Draw
 				SDL_SetRenderDrawColor(gRenderer, 0xFF, 0xFF, 0xFF, 0xFF);
 				SDL_RenderClear(gRenderer);
+
+				//Render level
+				for (int i = 0; i < TOTAL_TILES; ++i)
+				{
+					tileSet[i]->render(gRenderer, gTileTexture, gTileClips, camera);
+				}
 				
 				//Render background
-				gBGTexture.render(gRenderer, 0, 0, &camera);
+				//gBGTexture.render(gRenderer, 0, 0, &camera);
 
 				//Render player
 				player.render(gPlayerTexture, gRedDot, gBlueSlash, gRedSword, gRedCircle, camera, gSwordSlash);
@@ -208,9 +213,9 @@ int main(int argc, char* args[])
 				SDL_RenderPresent(gRenderer);
 			}
 		}
-	}
 
-	close();
+		close(tileSet);
+	}
 
 	return 0;
 }
@@ -283,7 +288,7 @@ bool init()
 	return success;
 }
 
-bool loadMedia()
+bool loadMedia(Tile* tiles[])
 {
 	//Text rendering color
 	SDL_Color textColor = { 255, 255, 255, 255 };
@@ -296,6 +301,20 @@ bool loadMedia()
 	if (!gBGTexture.loadFromFile(gRenderer, "assets/bg.png", LEVEL_WIDTH, LEVEL_HEIGHT))
 	{
 		printf("Failed to load background texture!\n");
+		success = false;
+	}
+
+	//Load tile texture
+	if (!gTileTexture.loadFromFile(gRenderer, "assets/tiles.png", 240 / 2, 480 / 2))
+	{
+		printf("Failed to load tile set texture!\n");
+		success = false;
+	}
+
+	//Load tile map
+	if (!setTiles(tiles, gTileClips))
+	{
+		printf("Failed to load tile set!\n");
 		success = false;
 	}
 
@@ -439,8 +458,18 @@ bool loadMedia()
 	return success;
 }
 
-void close()
+void close(Tile* tiles[])
 {
+	//Deallocate tiles
+	for (int i = 0; i < TOTAL_TILES; ++i)
+	{
+		if (tiles[i] != NULL)
+		{
+			delete tiles[i];
+			tiles[i] = NULL;
+		}
+	}
+
 	//Free loaded images
 	gBGTexture.free();
 	gPlayerTexture.free();

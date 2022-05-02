@@ -94,7 +94,7 @@ void Player::updateForce()
     }
 }
 
-void Player::move()
+void Player::move(Tile* tiles[])
 {
     if (isAlive)
     {
@@ -110,13 +110,13 @@ void Player::move()
             mPos.y += mVelY;
             mCollider.y = mPos.y;
 
-            if ((mPos.x < 0) || (mPos.x + PLAYER_WIDTH > LEVEL_WIDTH))
+            if ((mPos.x < 0) || (mPos.x + PLAYER_WIDTH > LEVEL_WIDTH) || touchesWall(mCollider, tiles) == TILE_LEFTRIGHT || touchesWall(mCollider, tiles) == TILE_CORNER)
             {
                 mVelX = -mVelX;
                 mForce += FORCE_LOSS;
             }
 
-            if ((mPos.y < 0) || (mPos.y + PLAYER_HEIGHT > LEVEL_HEIGHT))
+            if ((mPos.y < 0) || (mPos.y + PLAYER_HEIGHT > LEVEL_HEIGHT) || touchesWall(mCollider, tiles) == TILE_TOPBOTTOM || touchesWall(mCollider, tiles) == TILE_CORNER)
             {
                 mVelY = -mVelY;
                 mForce += FORCE_LOSS;
@@ -128,6 +128,31 @@ void Player::move()
         {
             mForce = mVelX = mVelY = 0;
         }
+    }
+}
+
+void Player::setCamera(SDL_Rect& camera)
+{
+    //Center the camera over the dot
+    camera.x = (mPos.x + PLAYER_WIDTH / 2) - SCREEN_WIDTH / 2;
+    camera.y = (mPos.y + PLAYER_HEIGHT / 2) - SCREEN_HEIGHT / 2;
+
+    //Keep the camera in bounds
+    if (camera.x < 0)
+    {
+        camera.x = 0;
+    }
+    if (camera.y < 0)
+    {
+        camera.y = 0;
+    }
+    if (camera.x > LEVEL_WIDTH - camera.w)
+    {
+        camera.x = LEVEL_WIDTH - camera.w;
+    }
+    if (camera.y > LEVEL_HEIGHT - camera.h)
+    {
+        camera.y = LEVEL_HEIGHT - camera.h;
     }
 }
 

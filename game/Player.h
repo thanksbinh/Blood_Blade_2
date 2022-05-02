@@ -13,6 +13,7 @@
 #include "LTimer.h"
 #include "Others.h"
 #include "Particle.h"
+//#include "Tile.h"
 
 class Player
 {
@@ -26,9 +27,12 @@ public:
 	void handleEvent(SDL_Event& e, const SDL_Rect& camera);
 	void react(const SDL_Rect& enemyCollider, const bool& enemyAttack);
 
-	void move();
+	void move(Tile* tiles[]);
 	void updateVel(const int& x, const int& y);
 	void updateForce();
+
+	//Centers the camera over the dot
+	void setCamera(SDL_Rect& camera);
 
 	void render(LTexture& gPlayerTexture, LTexture& gRedTexture, LTexture& gBlueSlash, LTexture& gRedSword, LTexture& gRedCircle, const SDL_Rect& camera, Mix_Chunk* gSwordSlash);
 	void renderParticles(LTexture& gRedTexture, const SDL_Rect& camera);

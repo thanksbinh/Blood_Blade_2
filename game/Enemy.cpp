@@ -2,8 +2,8 @@
 
 Enemy::Enemy() 
 {
-    mPos.set(0, 0);
-    mCollider = { 0, 0, ENEMY_WIDTH, ENEMY_HEIGHT };
+    mPos.set(40, 40);
+    mCollider = { 40, 40, ENEMY_WIDTH, ENEMY_HEIGHT };
     mVelX = mVelY = 0;
 
     mHP = ENEMY_MAX_HP;
@@ -18,8 +18,8 @@ Enemy::Enemy(SDL_Renderer* gRenderer, LTexture& gRedTexture, const SDL_Rect& cam
 {
     renderer = gRenderer;
 
-    mPos.set(0, 0);
-    mCollider = { 0, 0, ENEMY_WIDTH, ENEMY_HEIGHT };
+    mPos.set(40, 40);
+    mCollider = { 40, 40, ENEMY_WIDTH, ENEMY_HEIGHT };
     mVelX = mVelY = 0;
 
     mHP = ENEMY_MAX_HP;
@@ -58,7 +58,7 @@ void Enemy::init(SDL_Renderer* gRenderer, LTexture& gRedTexture, const SDL_Rect&
     hasParticle = true;
 }
 
-void Enemy::respawn(const SDL_Rect& camera)
+void Enemy::respawn(Tile* tiles[], const SDL_Rect& camera)
 {
     mHP = ENEMY_MAX_HP;
     gotHit = false;
@@ -70,7 +70,7 @@ void Enemy::respawn(const SDL_Rect& camera)
     do {
         mCollider.x = rand() % (LEVEL_WIDTH - ENEMY_WIDTH);
         mCollider.y = rand() % (LEVEL_HEIGHT - ENEMY_HEIGHT);
-    } while (checkCollision(mCollider, camera));
+    } while (checkCollision(mCollider, camera) || touchesWall(mCollider, tiles) >= TILE_LEFTRIGHT);
     mPos.set(mCollider.x, mCollider.y);
 }
 
@@ -105,7 +105,7 @@ void Enemy::react(const SDL_Rect& playerCollider, const bool& playerIsMoving)
     }
 }
 
-void Enemy::move(const SDL_Rect& playerCollider)
+void Enemy::move(const SDL_Rect& playerCollider, Tile* tiles[])
 {
     if (isAlive)
     {
@@ -120,7 +120,7 @@ void Enemy::move(const SDL_Rect& playerCollider)
             isAttack = true;
             if (mTime.wait(TIME_BEFORE_ATTACK))
             {
-                attack();
+                attack(tiles);
             }
         }
         else
@@ -153,7 +153,7 @@ void Enemy::updateVel(const Point& playerPos)
     mVelY = ENEMY_VEL * (y / pytago(x, y));
 }
 
-void Enemy::attack()
+void Enemy::attack(Tile* tiles[])
 {
     mPos.x += mVelX * 2;
     mCollider.x = mPos.x;
@@ -161,15 +161,15 @@ void Enemy::attack()
     mPos.y += mVelY * 2;
     mCollider.y = mPos.y;
 
-    if ((mPos.x < 0) || (mPos.x + PLAYER_WIDTH > LEVEL_WIDTH))
+    if ((mPos.x < 0) || (mPos.x + PLAYER_WIDTH > LEVEL_WIDTH) || touchesWall(mCollider, tiles) == TILE_LEFTRIGHT || touchesWall(mCollider, tiles) == TILE_CORNER)
     {
         mVelX = -mVelX;
     }
 
-    if ((mPos.y < 0) || (mPos.y + PLAYER_HEIGHT > LEVEL_HEIGHT))
+    if ((mPos.y < 0) || (mPos.y + PLAYER_HEIGHT > LEVEL_HEIGHT) || touchesWall(mCollider, tiles) == TILE_TOPBOTTOM || touchesWall(mCollider, tiles) == TILE_CORNER)
     {
         mVelY = -mVelY;
-    }
+    } 
 
     bodyAngle += SPIN_SPEED;
 }

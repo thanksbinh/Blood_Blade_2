@@ -30,13 +30,13 @@ public:
 	~Enemy();
 
 	void init(SDL_Renderer* gRenderer, LTexture& gRedTexture, const SDL_Rect& camera);
-	void respawn(const SDL_Rect& camera);
+	void respawn(Tile* tiles[], const SDL_Rect& camera);
 
 	void react(const SDL_Rect& playerCollider, const bool& playerIsMoving);
 
-	void move(const SDL_Rect& playerCollider);
+	void move(const SDL_Rect& playerCollider, Tile* tiles[]);
 	void updateVel(const Point& playerPos);
-	void attack();
+	void attack(Tile* tiles[]);
 
 	void render(LTexture& gEnemyTexture, LTexture& gRedTexture, LTexture& gRedSlash, const SDL_Rect& camera, Mix_Chunk* gSwordSlash);
 	void renderParticles(LTexture& gRedTexture, const SDL_Rect& camera);
