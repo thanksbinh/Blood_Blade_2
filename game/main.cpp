@@ -9,6 +9,7 @@
 #include <fstream>
 
 #include "Game.h"
+#include "Game_Utils.h"
 #include "LTexture.h"
 #include "Others.h"
 #include "Player.h"
@@ -21,20 +22,10 @@ SDL_Window* gWindow = NULL;
 SDL_Renderer* gRenderer = NULL;
 TTF_Font* gFont = NULL;
 
-LTexture gBGTexture;
+//Characters
 LTexture gPlayerTexture;
 LTexture gRogueTexture;
 LTexture gKnightTexture;
-
-LTexture gTileTexture;
-SDL_Rect gTileClips[TOTAL_TILE_SPRITES];
-
-LTexture gTimeTextTexture;
-LTexture gPromptTextTexture;
-LTexture gDataTextures[TOTAL_DATA];
-
-//Data points
-int gData[TOTAL_DATA];
 
 //Effect, items
 LTexture gRedDot;
@@ -46,6 +37,19 @@ LTexture gRedCircle;
 //Music, sound effects
 Mix_Music* gMusic = NULL;
 Mix_Chunk* gSwordSlash = NULL;
+
+//Tiles
+LTexture gTileTexture;
+SDL_Rect gTileClips[TOTAL_TILE_SPRITES];
+
+//Text
+LTexture gScoreTextTexture;
+LTexture gPromptTextTexture;
+LTexture gDataTextures[TOTAL_DATA];
+int gData[TOTAL_DATA];
+
+Player player;
+Enemy* enemy = new Rogue[TOTAL_ENEMY];
 
 bool init();
 bool loadMedia(Tile* tiles[]);
@@ -59,7 +63,6 @@ int main(int argc, char* args[])
 	}
 	else
 	{
-		//The level tiles
 		Tile* tileSet[TOTAL_TILES];
 
 		if (!loadMedia(tileSet))
@@ -68,99 +71,38 @@ int main(int argc, char* args[])
 		}
 		else
 		{
-			bool quit = false;
+			bool quitMenu = false;
+			bool playGame = false;
 
-			SDL_Event e;
-
-			//Text rendering color
-			SDL_Color textColor = { 255, 255, 255, 255 };
-			SDL_Color highlightColor = { 0xFF, 0, 0, 0xFF };
-
-			//Current input point
-			int currentData = 0;
-
-			//In memory text stream
-			std::stringstream timeText;
-
-			//The camera area
 			SDL_Rect camera = { 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT };
 
-			//Score = enemy killed
-			int score = 0;
-			int rank = -1;
-
-			Player player(gRenderer, gRedDot, camera);
-
-			Enemy* enemy = new Rogue[TOTAL_ENEMY];
-			for (int i = 0; i < TOTAL_ENEMY; i++)
+			while (!quitMenu)
 			{
-				enemy[i].init(gRenderer, gRedDot, camera);
-			}
-			
-			while (!quit)
-			{
+				SDL_Event e;
+
 				while (SDL_PollEvent(&e) != 0)
 				{
 					if (e.type == SDL_QUIT)
 					{
-						quit = true;
+						quitMenu = true;
+						playGame = false;
 					}
-					//Handle key press
-					else if (e.type == SDL_KEYDOWN)
+					else if (e.type == SDL_MOUSEBUTTONDOWN)
 					{
-						switch (e.key.keysym.sym)
-						{
-						case SDLK_r:
-							//Reset score board
-							for (int i = TOTAL_DATA - 1; i >= 0; --i)
-							{
-								gData[i] = 0;
-							}
-							break;
-						}
+						quitMenu = true;
+						playGame = true;
 					}
-					player.handleEvent(e, camera);
-				}
-
-				player.move(tileSet);
-				player.setCamera(camera);
-
-				for (int i = 0; i < TOTAL_ENEMY && i < score / 5 + 1; i++)
-				{
-					enemy[i].move(player.getCollider(), tileSet);
-
-					player.react(enemy[i].getCollider(), enemy[i].getIsAttack());
-					
-					enemy[i].react(player.getCollider(), player.getIsAttack());
-					
-					//Respawn enemy
-					if (!enemy[i].getIsAppear())
-					{
-						enemy[i].respawn(tileSet, camera);
-						score++;
-					}
-				}
-
-				//Text
-				timeText.str("");
-				timeText << " SCORE: " << score << " PLAYER'S HP: " << player.getHP();
-
-				if (!gPromptTextTexture.loadFromRenderedText(gRenderer, gFont, "Click, drag and release to move.", textColor))
-				{
-					printf("Failed to render text texture!\n");
-				}
-				if (!gTimeTextTexture.loadFromRenderedText(gRenderer, gFont, timeText.str().c_str(), textColor))
-				{
-					printf("Unable to render time texture!\n");
 				}
 
 				//Background music
 				if (Mix_PlayingMusic() == 0)
 				{
-					Mix_PlayMusic(gMusic, -1);
+					//Mix_PlayMusic(gMusic, -1);
 				}
 
-				//Draw
+				camera.x = (camera.x + 1) % (LEVEL_WIDTH - SCREEN_WIDTH);
+
+				//Draw to screen
 				SDL_SetRenderDrawColor(gRenderer, 0xFF, 0xFF, 0xFF, 0xFF);
 				SDL_RenderClear(gRenderer);
 
@@ -169,54 +111,143 @@ int main(int argc, char* args[])
 				{
 					tileSet[i]->render(gRenderer, gTileTexture, gTileClips, camera);
 				}
-				
-				//Render background
-				//gBGTexture.render(gRenderer, 0, 0, &camera);
 
-				//Render player
-				player.render(gPlayerTexture, gRedDot, gBlueSlash, gRedSword, gRedCircle, camera, gSwordSlash);
+				//Render prompt text
+				gPromptTextTexture.loadFromRenderedText(gRenderer, gFont, "Click to play", { 0xFF, 0xFF, 0xFF, 0xFF });
+				gPromptTextTexture.render(gRenderer, (SCREEN_WIDTH - gPromptTextTexture.getWidth()) / 2, 50);
 
-				//Render enemies
-				for (int i = 0; i < TOTAL_ENEMY && i < score / 5 + 1; i++)
+				SDL_RenderPresent(gRenderer);
+			}
+
+			while (playGame)
+			{
+				bool quit = false;
+
+				SDL_Event e;
+
+				SDL_Color textColor = { 0xFF, 0xFF, 0xFF, 0xFF };
+				SDL_Color highlightColor = { 0xFF, 0, 0, 0xFF };
+
+				std::stringstream scoreText;
+				std::stringstream rankText;
+
+				//Score = enemy killed
+				int score = 0;
+				int rank = -1;
+
+				player.init(gRenderer, gRedDot);
+				for (int i = 0; i < TOTAL_ENEMY; i++)
 				{
-					enemy[i].render(gRogueTexture, gRedDot, gRedSlash, camera, gSwordSlash);
+					enemy[i].init(gRenderer, gRedDot);
 				}
 
-				//Render text
-				gPromptTextTexture.render(gRenderer, (SCREEN_WIDTH - gPromptTextTexture.getWidth()) / 2, 0);
-				gTimeTextTexture.render(gRenderer, (SCREEN_WIDTH - gTimeTextTexture.getWidth()) / 2, (SCREEN_HEIGHT - gTimeTextTexture.getHeight()));
-				if (!player.getIsAlive())
+				while (!quit)
 				{
-					if (rank == -1)
+					while (SDL_PollEvent(&e) != 0)
 					{
-						//Rank calculation
-						for (int i = TOTAL_DATA - 1; i >= 0; --i)
+						if (e.type == SDL_QUIT)
 						{
-							if (score >= gData[i])
+							quit = true;
+							playGame = false;
+						}
+						else if (e.type == SDL_KEYDOWN)
+						{
+							switch (e.key.keysym.sym)
 							{
-								rank = i;
-								if (i != TOTAL_DATA - 1) gData[i + 1] = gData[i];
-								gData[i] = score;
+							case SDLK_r:
+								//Reset score board
+								for (int i = TOTAL_DATA - 1; i >= 0; --i)
+								{
+									gData[i] = 0;
+								}
+								break;
 							}
+						}
+						else if (e.type == SDL_MOUSEBUTTONDOWN && !player.getIsAlive()) quit = true;
+
+						player.handleEvent(e, camera);
+					}
+
+					player.setCamera(camera);
+					player.updateStrength(score);
+					player.move(tileSet);
+
+					for (int i = 0; i < TOTAL_ENEMY && i < score / 5 + 1; i++)
+					{
+						player.react(enemy[i].getCollider(), enemy[i].getIsAttack());
+
+						enemy[i].move(player.getCollider(), tileSet);
+						enemy[i].react(player.getAttackCollider(), player.getIsAttack());
+
+						if (!enemy[i].getIsAppear())
+						{
+							enemy[i].respawn(tileSet, camera);
+							score++;
 						}
 					}
 
-					for (int i = 0; i < TOTAL_DATA; ++i)
+					//Background music
+					if (Mix_PlayingMusic() == 0)
 					{
-						if (i == rank) gDataTextures[i].loadFromRenderedText(gRenderer, gFont, std::to_string(gData[i]), highlightColor);
-						else gDataTextures[i].loadFromRenderedText(gRenderer, gFont, std::to_string(gData[i]), textColor);
-						
-						gDataTextures[i].render(gRenderer, (SCREEN_WIDTH - gDataTextures[i].getWidth()) / 2, gPromptTextTexture.getHeight() + gDataTextures[0].getHeight() * i);
+						//Mix_PlayMusic(gMusic, -1);
 					}
+
+					//Draw to screen
+					SDL_SetRenderDrawColor(gRenderer, 0xFF, 0xFF, 0xFF, 0xFF);
+					SDL_RenderClear(gRenderer);
+
+					//Render level
+					for (int i = 0; i < TOTAL_TILES; ++i)
+					{
+						tileSet[i]->render(gRenderer, gTileTexture, gTileClips, camera);
+					}
+
+					//Render characters
+					player.render(gPlayerTexture, gRedDot, gBlueSlash, gRedSword, gRedCircle, camera, gSwordSlash);
+					for (int i = 0; i < TOTAL_ENEMY && i < score / 5 + 1; i++)
+					{
+						enemy[i].render(gRogueTexture, gRedDot, gRedSlash, camera, gSwordSlash);
+					}
+
+					//Render score text
+					scoreText.str("");
+					scoreText << "YOUR SCORE: " << score;
+
+					gScoreTextTexture.loadFromRenderedText(gRenderer, gFont, scoreText.str().c_str(), textColor);
+					gScoreTextTexture.render(gRenderer, SCREEN_WIDTH - gScoreTextTexture.getWidth() - 10, 10);
+
+					//Player die
+					if (!player.getIsAlive())
+					{
+						gPromptTextTexture.loadFromRenderedText(gRenderer, gFont, "You die! Click to play again", highlightColor);
+						gPromptTextTexture.render(gRenderer, (SCREEN_WIDTH - gPromptTextTexture.getWidth()) / 2, 50);
+
+						rankCalculation(score, rank, gData);
+
+						//Show rank board
+						for (int i = 0; i < TOTAL_DATA; ++i)
+						{
+							rankText.str("");
+							if (i == 0) rankText.str("Rank");
+							else rankText << i;
+
+							gDataTextures[i].loadFromRenderedText(gRenderer, gFont, rankText.str().c_str(), (i == rank || i == 0) ? highlightColor : textColor);
+							gDataTextures[i].render(gRenderer, SCREEN_WIDTH / 3 - gDataTextures[i].getWidth() / 2, 100 + gDataTextures[0].getHeight() * i);
+							
+							rankText.str("");
+							if (i == 0) rankText.str("Score");
+							else rankText << gData[i];
+
+							gDataTextures[i].loadFromRenderedText(gRenderer, gFont, rankText.str().c_str(), (i == rank || i == 0) ? highlightColor : textColor);
+							gDataTextures[i].render(gRenderer, SCREEN_WIDTH * 2 / 3 - gDataTextures[i].getWidth() / 2, 100 + gDataTextures[0].getHeight() * i);
+						}
+					}
+					SDL_RenderPresent(gRenderer);
 				}
-				
-				SDL_RenderPresent(gRenderer);
 			}
+			close(tileSet);
 		}
-
-		close(tileSet);
 	}
-
 	return 0;
 }
 
@@ -290,22 +321,11 @@ bool init()
 
 bool loadMedia(Tile* tiles[])
 {
-	//Text rendering color
-	SDL_Color textColor = { 255, 255, 255, 255 };
-	SDL_Color highlightColor = { 0xFF, 0, 0, 0xFF };
-
 	//Loading success flag
 	bool success = true;
 
-	//Load background texture
-	if (!gBGTexture.loadFromFile(gRenderer, "assets/bg.png", LEVEL_WIDTH, LEVEL_HEIGHT))
-	{
-		printf("Failed to load background texture!\n");
-		success = false;
-	}
-
 	//Load tile texture
-	if (!gTileTexture.loadFromFile(gRenderer, "assets/tiles.png", 240 / 2, 480 / 2))
+	if (!gTileTexture.loadFromFile(gRenderer, "assets/tiles.png", 120, 240))
 	{
 		printf("Failed to load tile set texture!\n");
 		success = false;
@@ -381,10 +401,10 @@ bool loadMedia(Tile* tiles[])
 	gRedCircle.setAlpha(96);
 
 	//Open the font
-	gFont = TTF_OpenFont("assets/lazy.ttf", 28);
+	gFont = TTF_OpenFont("assets/PlaymegamesReguler-2OOee.ttf", 28);
 	if (gFont == NULL)
 	{
-		printf("Failed to load lazy font! SDL_ttf Error: %s\n", TTF_GetError());
+		printf("Failed to load font! SDL_ttf Error: %s\n", TTF_GetError());
 		success = false;
 	}
 
@@ -432,13 +452,6 @@ bool loadMedia(Tile* tiles[])
 		SDL_RWclose(file);
 	}
 
-	//Initialize data textures
-	gDataTextures[0].loadFromRenderedText(gRenderer, gFont, std::to_string(gData[0]), highlightColor);
-	for (int i = 1; i < TOTAL_DATA; ++i)
-	{
-		gDataTextures[i].loadFromRenderedText(gRenderer, gFont, std::to_string(gData[i]), textColor);
-	}
-
 	//Load music
 	gMusic = Mix_LoadMUS("21_sound_effects_and_music/epic-cinematic-saga-trailer-myths.wav");
 	if (gMusic == NULL)
@@ -471,12 +484,11 @@ void close(Tile* tiles[])
 	}
 
 	//Free loaded images
-	gBGTexture.free();
 	gPlayerTexture.free();
 	gRogueTexture.free();
 	gKnightTexture.free();
 
-	gTimeTextTexture.free();
+	gScoreTextTexture.free();
 	gPromptTextTexture.free();
 	gRedDot.free();
 	gRedSlash.free();

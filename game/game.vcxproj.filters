@@ -48,6 +48,9 @@
     <ClCompile Include="Collision.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Game_Utils.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Game.h">
@@ -78,6 +81,9 @@
       <Filter>Resource Files</Filter>
     </ClInclude>
     <ClInclude Include="Collision.h">
+      <Filter>Resource Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Game_Utils.h">
       <Filter>Resource Files</Filter>
     </ClInclude>
   </ItemGroup>

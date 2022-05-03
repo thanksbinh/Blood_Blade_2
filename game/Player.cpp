@@ -10,23 +10,63 @@
 #define FORCE_LOSS 2
 #define M_PI 3.14159265358979323846
 
-Player::Player(SDL_Renderer* gRenderer, LTexture& gRedTexture, const SDL_Rect& camera)
+Player::Player()
+{
+    mPos.set(LEVEL_WIDTH / 2, LEVEL_HEIGHT / 2);
+    mCollider = { mPos.x, mPos.y, PLAYER_WIDTH, PLAYER_HEIGHT };
+    mForce = mVelX = mVelY = 0;
+
+    mHP = PLAYER_MAX_HP;
+    mStrength = 0;
+    mAttackCollider = { mPos.x - mStrength, mPos.y - mStrength, PLAYER_WIDTH + mStrength*2, PLAYER_HEIGHT + mStrength*2 };
+
+    gotHit = false;
+    isAlive = true;
+    isAppear = true;
+}
+
+void Player::init(SDL_Renderer* gRenderer, LTexture& gRedTexture)
 {
     renderer = gRenderer;
+
+    for (int i = 0; i < TOTAL_PARTICLES; ++i)
+    {
+        particles[i] = new Particle(mCollider, gRedTexture);
+    }
 
     mPos.set(LEVEL_WIDTH / 2, LEVEL_HEIGHT / 2);
     mCollider = { mPos.x, mPos.y, PLAYER_WIDTH, PLAYER_HEIGHT };
     mForce = mVelX = mVelY = 0;
 
     mHP = PLAYER_MAX_HP;
+    mStrength = 0;
+    mAttackCollider = { mPos.x - mStrength, mPos.y - mStrength, PLAYER_WIDTH + mStrength * 2, PLAYER_HEIGHT + mStrength * 2 };
+
     gotHit = false;
     isAlive = true;
     isAppear = true;
+}
+
+Player::Player(SDL_Renderer* gRenderer, LTexture& gRedTexture)
+{
+    renderer = gRenderer;
 
     for (int i = 0; i < TOTAL_PARTICLES; ++i)
     {
         particles[i] = new Particle(mCollider, gRedTexture);
     }
+
+    mPos.set(LEVEL_WIDTH / 2, LEVEL_HEIGHT / 2);
+    mCollider = { mPos.x, mPos.y, PLAYER_WIDTH, PLAYER_HEIGHT };
+    mForce = mVelX = mVelY = 0;
+
+    mHP = PLAYER_MAX_HP;
+    mStrength = 0;
+    mAttackCollider = { mPos.x - mStrength, mPos.y - mStrength, PLAYER_WIDTH + mStrength * 2, PLAYER_HEIGHT + mStrength * 2 };
+    
+    gotHit = false;
+    isAlive = true;
+    isAppear = true;
 }
 
 Player::~Player()
@@ -63,6 +103,18 @@ void Player::handleEvent(SDL_Event& e, const SDL_Rect& camera)
     }
 }
 
+void Player::updateVel(const int& x, const int& y)
+{
+    mVelX = PLAYER_VEL * (x * 1.0) / pytago(x, y);
+    mVelY = PLAYER_VEL * (y * 1.0) / pytago(x, y);
+}
+
+void Player::updateStrength(const int& score)
+{
+    mStrength = (score < 24)? (score * 2) : 48;
+    mAttackCollider = { mPos.x - mStrength, mPos.y - mStrength, PLAYER_WIDTH + mStrength * 2, PLAYER_HEIGHT + mStrength * 2 };
+}
+
 void Player::react(const SDL_Rect& enemyCollider, const bool& enemyAttack)
 {
     if (isAlive)
@@ -76,21 +128,6 @@ void Player::react(const SDL_Rect& enemyCollider, const bool& enemyAttack)
         {
             die();
         }
-    }
-}
-
-void Player::updateVel(const int& x, const int& y)
-{
-    mVelX = PLAYER_VEL * (x * 1.0) / pytago(x, y);
-    mVelY = PLAYER_VEL * (y * 1.0) / pytago(x, y);
-}
-
-void Player::updateForce()
-{
-    if (isHold)
-    {
-        mForce = (mTime.getTicks() * FORCE_SPEED) % (2 * FORCE_CAPABILITY);
-        if (mForce > FORCE_CAPABILITY) mForce = 2 * FORCE_CAPABILITY - mForce;
     }
 }
 
@@ -131,13 +168,20 @@ void Player::move(Tile* tiles[])
     }
 }
 
+void Player::updateForce()
+{
+    if (isHold)
+    {
+        mForce = (mTime.getTicks() * FORCE_SPEED) % (2 * FORCE_CAPABILITY);
+        if (mForce > FORCE_CAPABILITY) mForce = 2 * FORCE_CAPABILITY - mForce;
+    }
+}
+
 void Player::setCamera(SDL_Rect& camera)
 {
-    //Center the camera over the dot
     camera.x = (mPos.x + PLAYER_WIDTH / 2) - SCREEN_WIDTH / 2;
     camera.y = (mPos.y + PLAYER_HEIGHT / 2) - SCREEN_HEIGHT / 2;
 
-    //Keep the camera in bounds
     if (camera.x < 0)
     {
         camera.x = 0;
@@ -158,16 +202,16 @@ void Player::setCamera(SDL_Rect& camera)
 
 void Player::renderParticles(LTexture& gRedTexture, const SDL_Rect& camera)
 {
-    for (int i = 0; i < mForce/5; ++i)
+    for (int i = 0; i < mForce/5 && i < TOTAL_PARTICLES; ++i)
     {
         if (particles[i]->isDead())
         {
             delete particles[i];
-            particles[i] = new Particle(mCollider, gRedTexture);
+            particles[i] = new Particle(mAttackCollider, gRedTexture);
         }
     }
 
-    for (int i = 0; i < mForce/5; ++i)
+    for (int i = 0; i < mForce/5 && i < TOTAL_PARTICLES; ++i)
     {
         particles[i]->render(renderer, camera);
     }
@@ -175,13 +219,13 @@ void Player::renderParticles(LTexture& gRedTexture, const SDL_Rect& camera)
 
 void Player::die()
 {
+    mForce = FORCE_CAPABILITY;
     for (int i = 0; i < TOTAL_PARTICLES; ++i)
     {
         particles[i]->reset(mCollider);
     }
     isAlive = false;
     mCollider.y = -9999;
-    mForce = FORCE_CAPABILITY;
 }
 
 void Player::render(LTexture& gPlayerTexture, LTexture& gRedTexture, LTexture& gBlueSlash, LTexture& gRedSword, LTexture& gRedCircle, const SDL_Rect& camera, Mix_Chunk* gSwordSlash)
@@ -203,10 +247,9 @@ void Player::render(LTexture& gPlayerTexture, LTexture& gRedTexture, LTexture& g
             //Show player direction
             gRedSword.render(renderer, mPos.x - camera.x - PLAYER_WIDTH, mPos.y - camera.y - PLAYER_HEIGHT, NULL, swordAngle, 0);
         }
-        //Lose blood -> lose red
+        //Lose blood -> lose red color
         gPlayerTexture.setColor(255 * (mHP*1.0/PLAYER_MAX_HP), 255, 255);
     }
-
     renderParticles(gRedTexture, camera);
 }
 

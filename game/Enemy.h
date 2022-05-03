@@ -26,24 +26,25 @@ public:
 	static const int ATTACK_RANGE = 100;
 
 	Enemy();
-	Enemy(SDL_Renderer* gRenderer, LTexture& gRedTexture, const SDL_Rect& camera);
+	Enemy(SDL_Renderer* gRenderer, LTexture& gRedTexture);
 	~Enemy();
 
-	void init(SDL_Renderer* gRenderer, LTexture& gRedTexture, const SDL_Rect& camera);
+	void init(SDL_Renderer* gRenderer, LTexture& gRedTexture);
 	void respawn(Tile* tiles[], const SDL_Rect& camera);
 
-	void react(const SDL_Rect& playerCollider, const bool& playerIsMoving);
+	//Lose HP if (player attacking, collide with player), die when player not attacking, disappear after 0.1s
+	void react(const SDL_Rect& pAttackCollider, const bool& pIsAttacking);
 
-	void move(const SDL_Rect& playerCollider, Tile* tiles[]);
-	void updateVel(const Point& playerPos);
+	//Attack, move base on player's position
+	void move(const SDL_Rect& pCollider, Tile* tiles[]);
 	void attack(Tile* tiles[]);
+	void updateVel(const Point& pPos);
 
+	//Render enemy, effects, sounds
 	void render(LTexture& gEnemyTexture, LTexture& gRedTexture, LTexture& gRedSlash, const SDL_Rect& camera, Mix_Chunk* gSwordSlash);
 	void renderParticles(LTexture& gRedTexture, const SDL_Rect& camera);
 
 	SDL_Rect getCollider() { return mCollider; }
-	bool getIsAlive() { return isAlive; }
-	bool getHit() { return gotHit; }
 	bool getIsAppear() { return isAppear; }
 	bool getIsAttack() { return isAttack; }
 
@@ -52,10 +53,11 @@ protected:
 	Particle* particles[TOTAL_PARTICLES];
 
 	Point mPos;
-	int mVelX, mVelY;
 	SDL_Rect mCollider;
+	int mVelX, mVelY;
 
 	int mHP;
+
 	bool gotHit;
 	bool isAlive;
 	bool isAppear;

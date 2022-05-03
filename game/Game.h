@@ -39,9 +39,7 @@ static const int TOTAL_PARTICLES = 20;
 
 static const int TOTAL_ENEMY = 5;
 
-static const int ATTACK_AREA = 25;
-
 //Number of data integers
-const int TOTAL_DATA = 10;
+const int TOTAL_DATA = 11;
 
 #endif /* Game_h */

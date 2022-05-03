@@ -14,9 +14,15 @@ Enemy::Enemy()
     isAttack = false;
 }
 
-Enemy::Enemy(SDL_Renderer* gRenderer, LTexture& gRedTexture, const SDL_Rect& camera)
+void Enemy::init(SDL_Renderer* gRenderer, LTexture& gRedTexture)
 {
     renderer = gRenderer;
+
+    for (int i = 0; i < TOTAL_PARTICLES; ++i)
+    {
+        particles[i] = new Particle(mCollider, gRedTexture);
+    }
+    hasParticle = true;
 
     mPos.set(40, 40);
     mCollider = { 40, 40, ENEMY_WIDTH, ENEMY_HEIGHT };
@@ -28,12 +34,28 @@ Enemy::Enemy(SDL_Renderer* gRenderer, LTexture& gRedTexture, const SDL_Rect& cam
     isAppear = true;
     hasParticle = false;
     isAttack = false;
+}
+
+Enemy::Enemy(SDL_Renderer* gRenderer, LTexture& gRedTexture)
+{
+    renderer = gRenderer;
 
     for (int i = 0; i < TOTAL_PARTICLES; ++i)
     {
         particles[i] = new Particle(mCollider, gRedTexture);
     }
     hasParticle = true;
+
+    mPos.set(40, 40);
+    mCollider = { 40, 40, ENEMY_WIDTH, ENEMY_HEIGHT };
+    mVelX = mVelY = 0;
+
+    mHP = ENEMY_MAX_HP;
+    gotHit = false;
+    isAlive = true;
+    isAppear = true;
+    hasParticle = false;
+    isAttack = false;
 }
 
 Enemy::~Enemy()
@@ -47,17 +69,6 @@ Enemy::~Enemy()
     }
 }
 
-void Enemy::init(SDL_Renderer* gRenderer, LTexture& gRedTexture, const SDL_Rect& camera)
-{
-    renderer = gRenderer;
-
-    for (int i = 0; i < TOTAL_PARTICLES; ++i)
-    {
-        particles[i] = new Particle(mCollider, gRedTexture);
-    }
-    hasParticle = true;
-}
-
 void Enemy::respawn(Tile* tiles[], const SDL_Rect& camera)
 {
     mHP = ENEMY_MAX_HP;
@@ -66,29 +77,26 @@ void Enemy::respawn(Tile* tiles[], const SDL_Rect& camera)
     isAppear = true;
     hasParticle = false;
     isAttack = false;
-    //Respawn random in level, but not in camera
+    //Respawn random in wall tiles, but not in camera
     do {
         mCollider.x = rand() % (LEVEL_WIDTH - ENEMY_WIDTH);
         mCollider.y = rand() % (LEVEL_HEIGHT - ENEMY_HEIGHT);
-    } while (checkCollision(mCollider, camera) || touchesWall(mCollider, tiles) >= TILE_LEFTRIGHT);
+    } while (checkCollision(mCollider, camera) || touchesWall(mCollider, tiles) < TILE_LEFTRIGHT);
     mPos.set(mCollider.x, mCollider.y);
 }
 
-void Enemy::react(const SDL_Rect& playerCollider, const bool& playerIsMoving)
+void Enemy::react(const SDL_Rect& pAttackCollider, const bool& pIsAttacking)
 {
-    SDL_Rect playerAttackCollider = { playerCollider.x - ATTACK_AREA, playerCollider.y - ATTACK_AREA,
-                                      playerCollider.w + 2 * ATTACK_AREA, playerCollider.h + 2 * ATTACK_AREA };
-
     if (isAlive)
     {
         //Take damage
-        if (playerIsMoving && checkCollision(mCollider, playerAttackCollider))
+        if (pIsAttacking && checkCollision(mCollider, pAttackCollider))
         {
             gotHit = true;
             mHP--;
         }
         //Die
-        if (!playerIsMoving && mHP <= 0)
+        if (!pIsAttacking && mHP <= 0)
         {
             isAlive = false;
             for (int i = 0; i < TOTAL_PARTICLES; ++i)
@@ -105,17 +113,16 @@ void Enemy::react(const SDL_Rect& playerCollider, const bool& playerIsMoving)
     }
 }
 
-void Enemy::move(const SDL_Rect& playerCollider, Tile* tiles[])
+void Enemy::move(const SDL_Rect& pCollider, Tile* tiles[])
 {
     if (isAlive)
     {
-        Point playerPos(playerCollider.x, playerCollider.y);
+        Point pPos(pCollider.x, pCollider.y);
 
-        //Turn to player
         if (mVelX < 0) bodyFlip = SDL_FLIP_HORIZONTAL;
         else if (mVelX > 0) bodyFlip = SDL_FLIP_NONE;
 
-        if (distance(playerPos, mPos) <= ATTACK_RANGE)
+        if (distance(pPos, mPos) <= ATTACK_RANGE)
         {
             isAttack = true;
             if (mTime.wait(TIME_BEFORE_ATTACK))
@@ -129,7 +136,7 @@ void Enemy::move(const SDL_Rect& playerCollider, Tile* tiles[])
             mTime.stop();
             bodyAngle = 0;
 
-            updateVel(playerPos);
+            updateVel(pPos);
 
             mPos.x += mVelX;
             mCollider.x = mPos.x;
@@ -142,15 +149,6 @@ void Enemy::move(const SDL_Rect& playerCollider, Tile* tiles[])
     {
         isAttack = false;
     }
-}
-
-void Enemy::updateVel(const Point& playerPos)
-{
-    double x = playerPos.x - mPos.x;
-    double y = playerPos.y - mPos.y;
-
-    mVelX = ENEMY_VEL * (x / pytago(x, y));
-    mVelY = ENEMY_VEL * (y / pytago(x, y));
 }
 
 void Enemy::attack(Tile* tiles[])
@@ -172,6 +170,15 @@ void Enemy::attack(Tile* tiles[])
     } 
 
     bodyAngle += SPIN_SPEED;
+}
+
+void Enemy::updateVel(const Point& pPos)
+{
+    double x = pPos.x - mPos.x;
+    double y = pPos.y - mPos.y;
+
+    mVelX = ENEMY_VEL * (x / pytago(x, y));
+    mVelY = ENEMY_VEL * (y / pytago(x, y));
 }
 
 void Enemy::renderParticles(LTexture& gRedTexture, const SDL_Rect& camera)
