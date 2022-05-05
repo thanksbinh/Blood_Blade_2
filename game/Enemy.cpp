@@ -2,15 +2,14 @@
 
 Enemy::Enemy() 
 {
-    mPos.set(40, 40);
-    mCollider = { 40, 40, ENEMY_WIDTH, ENEMY_HEIGHT };
+    mPos.set(0, 0);
+    mCollider = mAttackCollider = { 0, 0, ENEMY_WIDTH, ENEMY_HEIGHT };
     mVelX = mVelY = 0;
 
     mHP = ENEMY_MAX_HP;
     gotHit = false;
     isAlive = true;
     isAppear = true;
-    hasParticle = false;
     isAttack = false;
 }
 
@@ -18,44 +17,40 @@ void Enemy::init(SDL_Renderer* gRenderer, LTexture& gRedTexture)
 {
     renderer = gRenderer;
 
-    for (int i = 0; i < TOTAL_PARTICLES; ++i)
-    {
-        particles[i] = new Particle(mCollider, gRedTexture);
-    }
-    hasParticle = true;
-
-    mPos.set(40, 40);
-    mCollider = { 40, 40, ENEMY_WIDTH, ENEMY_HEIGHT };
+    mPos.set(0, 0);
+    mCollider = mAttackCollider = { 0, 0, ENEMY_WIDTH, ENEMY_HEIGHT };
     mVelX = mVelY = 0;
 
     mHP = ENEMY_MAX_HP;
     gotHit = false;
     isAlive = true;
     isAppear = true;
-    hasParticle = false;
     isAttack = false;
+
+    for (int i = 0; i < TOTAL_PARTICLES; ++i)
+    {
+        particles[i] = new Particle(mCollider, gRedTexture);
+    }
 }
 
 Enemy::Enemy(SDL_Renderer* gRenderer, LTexture& gRedTexture)
 {
     renderer = gRenderer;
 
-    for (int i = 0; i < TOTAL_PARTICLES; ++i)
-    {
-        particles[i] = new Particle(mCollider, gRedTexture);
-    }
-    hasParticle = true;
-
-    mPos.set(40, 40);
-    mCollider = { 40, 40, ENEMY_WIDTH, ENEMY_HEIGHT };
+    mPos.set(0, 0);
+    mCollider = mAttackCollider = { 0, 0, ENEMY_WIDTH, ENEMY_HEIGHT };
     mVelX = mVelY = 0;
 
     mHP = ENEMY_MAX_HP;
     gotHit = false;
     isAlive = true;
     isAppear = true;
-    hasParticle = false;
     isAttack = false;
+
+    for (int i = 0; i < TOTAL_PARTICLES; ++i)
+    {
+        particles[i] = new Particle(mCollider, gRedTexture);
+    }
 }
 
 Enemy::~Enemy()
@@ -75,7 +70,6 @@ void Enemy::respawn(Tile* tiles[], const SDL_Rect& camera)
     gotHit = false;
     isAlive = true;
     isAppear = true;
-    hasParticle = false;
     isAttack = false;
     //Respawn random in wall tiles, but not in camera
     do {
@@ -83,20 +77,21 @@ void Enemy::respawn(Tile* tiles[], const SDL_Rect& camera)
         mCollider.y = rand() % (LEVEL_HEIGHT - ENEMY_HEIGHT);
     } while (checkCollision(mCollider, camera) || touchesWall(mCollider, tiles) < TILE_LEFTRIGHT);
     mPos.set(mCollider.x, mCollider.y);
+    mAttackCollider = mCollider;
 }
 
-void Enemy::react(const SDL_Rect& pAttackCollider, const bool& pIsAttacking)
+void Enemy::react(Player& player)
 {
     if (isAlive)
     {
         //Take damage
-        if (pIsAttacking && checkCollision(mCollider, pAttackCollider))
+        if (player.getIsAttack() && checkCollision(mCollider, player.getAttackCollider()))
         {
             gotHit = true;
             mHP--;
         }
         //Die
-        if (!pIsAttacking && mHP <= 0)
+        if (!player.getIsAttack() && mHP <= 0)
         {
             isAlive = false;
             for (int i = 0; i < TOTAL_PARTICLES; ++i)
@@ -124,7 +119,6 @@ void Enemy::move(const SDL_Rect& pCollider, Tile* tiles[])
 
         if (distance(pPos, mPos) <= ATTACK_RANGE)
         {
-            isAttack = true;
             if (mTime.wait(TIME_BEFORE_ATTACK))
             {
                 attack(tiles);
@@ -139,37 +133,18 @@ void Enemy::move(const SDL_Rect& pCollider, Tile* tiles[])
             updateVel(pPos);
 
             mPos.x += mVelX;
-            mCollider.x = mPos.x;
+            mCollider.x = mAttackCollider.x = mPos.x;
 
             mPos.y += mVelY;
-            mCollider.y = mPos.y;
+            mCollider.y = mAttackCollider.y = mPos.y;
         }
     }
-    else 
-    {
-        isAttack = false;
-    }
+    else isAttack = false;
 }
 
 void Enemy::attack(Tile* tiles[])
 {
-    mPos.x += mVelX * 2;
-    mCollider.x = mPos.x;
-
-    mPos.y += mVelY * 2;
-    mCollider.y = mPos.y;
-
-    if ((mPos.x < 0) || (mPos.x + PLAYER_WIDTH > LEVEL_WIDTH) || touchesWall(mCollider, tiles) == TILE_LEFTRIGHT || touchesWall(mCollider, tiles) == TILE_CORNER)
-    {
-        mVelX = -mVelX;
-    }
-
-    if ((mPos.y < 0) || (mPos.y + PLAYER_HEIGHT > LEVEL_HEIGHT) || touchesWall(mCollider, tiles) == TILE_TOPBOTTOM || touchesWall(mCollider, tiles) == TILE_CORNER)
-    {
-        mVelY = -mVelY;
-    } 
-
-    bodyAngle += SPIN_SPEED;
+    
 }
 
 void Enemy::updateVel(const Point& pPos)
@@ -198,21 +173,40 @@ void Enemy::renderParticles(LTexture& gRedTexture, const SDL_Rect& camera)
     }
 }
 
-void Enemy::render(LTexture& gEnemyTexture, LTexture& gRedTexture, LTexture& gRedSlash, const SDL_Rect& camera, Mix_Chunk* gSwordSlash)
+void Enemy::render(LTexture& gEnemyTexture, LTexture& gRedTexture, LTexture& gRedSlashTexture, const SDL_Rect& camera, Mix_Chunk* gSwordSlashSound)
 {
     if (isAlive)
     {
         gEnemyTexture.render(renderer, mPos.x - camera.x, mPos.y - camera.y, NULL, bodyAngle, 0, bodyFlip);
-        if (gotHit)
-        {
-            gRedSlash.render(renderer, mPos.x - ENEMY_WIDTH / 2 - camera.x, mPos.y - ENEMY_HEIGHT / 2 - camera.y, NULL, rand(), 0, bodyFlip);
-            Mix_PlayChannel(-1, gSwordSlash, 0);
-            gotHit = false;
-        }
     }
     else
     {
         renderParticles(gRedTexture, camera);
+    }
+    if (gotHit)
+    {
+        gRedSlashTexture.render(renderer, mPos.x - ENEMY_WIDTH / 2 - camera.x, mPos.y - ENEMY_HEIGHT / 2 - camera.y, NULL, rand(), 0, bodyFlip);
+        Mix_PlayChannel(-1, gSwordSlashSound, 0);
+        gotHit = false;
+    }
+}
+
+void Enemy::render(LTexture& gEnemyTexture, LTexture& gRedTexture, LTexture& gRedSlashTexture, LTexture& gWeaponTexture, const SDL_Rect& camera, Mix_Chunk* gSwordSlashSound)
+{
+    if (isAlive)
+    {
+        gEnemyTexture.render(renderer, mPos.x - camera.x, mPos.y - camera.y, NULL, bodyAngle, 0, bodyFlip);
+        gWeaponTexture.render(renderer, mAttackCollider.x - camera.x, mAttackCollider.y - camera.y, NULL, weaponAngle, 0);
+    }
+    else
+    {
+        renderParticles(gRedTexture, camera);
+    }
+    if (gotHit)
+    {
+        gRedSlashTexture.render(renderer, mPos.x - ENEMY_WIDTH / 2 - camera.x, mPos.y - ENEMY_HEIGHT / 2 - camera.y, NULL, rand(), 0, bodyFlip);
+        Mix_PlayChannel(-1, gSwordSlashSound, 0);
+        gotHit = false;
     }
 }
 

@@ -4,7 +4,7 @@
 
 #include <SDL.h>
 
-#include "Game.h"
+#include "Game_Base.h"
 #include "LTexture.h"
 #include "Collision.h"
 

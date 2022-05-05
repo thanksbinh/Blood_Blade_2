@@ -8,7 +8,7 @@
 #include <string>
 #include <iostream>
 
-#include "Game.h"
+#include "Game_Base.h"
 #include "LTexture.h"
 #include "LTimer.h"
 #include "Others.h"
@@ -26,15 +26,15 @@ public:
 
 	void init(SDL_Renderer* gRenderer, LTexture& gRedTexture);
 
-	//Update velocity base on (initPos - lastPos)
+	//Update sword angle, velocity base on (initPos - lastPos)
 	void handleEvent(SDL_Event& e, const SDL_Rect& camera);
 	void updateVel(const int& x, const int& y);
 
-	//Strength = attack range = damame/frame
+	//Strength = attack range = damage/frame
 	void updateStrength(const int& score);
 
 	//Lose HP if (player not attacking, enemy attacking, collide with enemy)
-	void react(const SDL_Rect& enemyCollider, const bool& enemyAttack);
+	void react(const bool& eIsAttack, const SDL_Rect& eAttackCollider);
 
 	//Update position base on velocity, update force base on mouse hold time
 	void move(Tile* tiles[]);
@@ -44,16 +44,15 @@ public:
 	void setCamera(SDL_Rect& camera);
 
 	//Render player, effects, sounds
-	void render(LTexture& gPlayerTexture, LTexture& gRedTexture, LTexture& gBlueSlash, LTexture& gRedSword, LTexture& gRedCircle, const SDL_Rect& camera, Mix_Chunk* gSwordSlash);
+	void render(LTexture& gPlayerTexture, LTexture& gRedTexture, LTexture& gBlueSlashTexture, LTexture& gWeaponTexture, LTexture& gRedCircleTexture, const SDL_Rect& camera, Mix_Chunk* gSwordSlashSound);
 	void renderParticles(LTexture& gRedTexture, const SDL_Rect& camera);
-
-	//Effect when die
-	void die();
 
 	SDL_Rect getCollider() { return mCollider; }
 	SDL_Rect getAttackCollider() { return mAttackCollider; }
 	bool getIsAttack() { return (mVelX != 0) || (mVelY != 0); }
 	bool getIsAlive() { return isAlive; }
+	bool getIsAppear() { return isAppear; }
+	void pBlock() { gotBlock = true; }
 
 private:
 	SDL_Renderer* renderer;
@@ -69,6 +68,7 @@ private:
 	SDL_Rect mAttackCollider;
 	
 	bool gotHit;
+	bool gotBlock;
 	bool isAlive;
 	bool isAppear;
 

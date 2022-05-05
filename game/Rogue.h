@@ -8,7 +8,7 @@
 #include <string>
 #include <iostream>
 
-#include "Game.h"
+#include "Game_Base.h"
 #include "LTexture.h"
 #include "Others.h"
 #include "Particle.h"
@@ -18,9 +18,14 @@
 class Rogue : public Enemy
 {
 public:
+	static const int ATTACK_SPEED = 2;
+	static const int SPIN_SPEED = 15;
+
 	Rogue();
-	Rogue(SDL_Renderer* gRenderer, const SDL_Rect& camera);
+	Rogue(SDL_Renderer* gRenderer, LTexture& gRedTexture);
 	~Rogue();
+
+	void attack(Tile* tiles[]);
 
 private:
 	

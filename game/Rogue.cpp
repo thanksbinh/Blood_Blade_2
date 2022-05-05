@@ -4,6 +4,7 @@
 
 Rogue::Rogue()
 {
+    mPos.set(0, 0);
     mCollider = { 0, 0, ENEMY_WIDTH, ENEMY_HEIGHT };
     mVelX = mVelY = 0;
 
@@ -11,14 +12,14 @@ Rogue::Rogue()
     gotHit = false;
     isAlive = true;
     isAppear = true;
-    hasParticle = false;
     isAttack = false;
 }
 
-Rogue::Rogue(SDL_Renderer* gRenderer, const SDL_Rect& camera)
+Rogue::Rogue(SDL_Renderer* gRenderer, LTexture& gRedTexture)
 {
     renderer = gRenderer;
 
+    mPos.set(0, 0);
     mCollider = { 0, 0, ENEMY_WIDTH, ENEMY_HEIGHT };
     mVelX = mVelY = 0;
 
@@ -26,13 +27,12 @@ Rogue::Rogue(SDL_Renderer* gRenderer, const SDL_Rect& camera)
     gotHit = false;
     isAlive = true;
     isAppear = true;
-    hasParticle = false;
     isAttack = false;
 
-    do {
-        mCollider.x = mPos.x = rand() % (LEVEL_WIDTH - ENEMY_WIDTH);
-        mCollider.y = mPos.y = rand() % (LEVEL_HEIGHT - ENEMY_HEIGHT);
-    } while (checkCollision(mCollider, camera));
+    for (int i = 0; i < TOTAL_PARTICLES; ++i)
+    {
+        particles[i] = new Particle(mCollider, gRedTexture);
+    }
 }
 
 Rogue::~Rogue()
@@ -44,5 +44,28 @@ Rogue::~Rogue()
     {
         delete particles[i];
     }
+}
+
+void Rogue::attack(Tile* tiles[])
+{
+    isAttack = true;
+
+    mPos.x += mVelX * ATTACK_SPEED;
+    mCollider.x = mAttackCollider.x = mPos.x;
+
+    mPos.y += mVelY * ATTACK_SPEED;
+    mCollider.y = mAttackCollider.y = mPos.y;
+
+    if ((mPos.x < 0) || (mPos.x + PLAYER_WIDTH > LEVEL_WIDTH) || touchesWall(mCollider, tiles) == TILE_LEFTRIGHT || touchesWall(mCollider, tiles) == TILE_CORNER)
+    {
+        mVelX = -mVelX;
+    }
+
+    if ((mPos.y < 0) || (mPos.y + PLAYER_HEIGHT > LEVEL_HEIGHT) || touchesWall(mCollider, tiles) == TILE_TOPBOTTOM || touchesWall(mCollider, tiles) == TILE_CORNER)
+    {
+        mVelY = -mVelY;
+    }
+
+    bodyAngle += SPIN_SPEED;
 }
 

@@ -14,7 +14,7 @@ Particle::Particle(const SDL_Rect& area, LTexture& gRedTexture)
 
 void Particle::reset(const SDL_Rect& area)
 {
-    //Set offsets
+    //Reset offsets
     mPosX = area.x + (rand() % area.w);
     mPosY = area.y + (rand() % area.h);
 }

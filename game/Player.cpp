@@ -13,14 +13,14 @@
 Player::Player()
 {
     mPos.set(LEVEL_WIDTH / 2, LEVEL_HEIGHT / 2);
-    mCollider = { mPos.x, mPos.y, PLAYER_WIDTH, PLAYER_HEIGHT };
+    mCollider = mAttackCollider = { mPos.x, mPos.y, PLAYER_WIDTH, PLAYER_HEIGHT };
     mForce = mVelX = mVelY = 0;
 
     mHP = PLAYER_MAX_HP;
     mStrength = 0;
-    mAttackCollider = { mPos.x - mStrength, mPos.y - mStrength, PLAYER_WIDTH + mStrength*2, PLAYER_HEIGHT + mStrength*2 };
 
     gotHit = false;
+    gotBlock = false;
     isAlive = true;
     isAppear = true;
 }
@@ -29,44 +29,44 @@ void Player::init(SDL_Renderer* gRenderer, LTexture& gRedTexture)
 {
     renderer = gRenderer;
 
-    for (int i = 0; i < TOTAL_PARTICLES; ++i)
-    {
-        particles[i] = new Particle(mCollider, gRedTexture);
-    }
-
     mPos.set(LEVEL_WIDTH / 2, LEVEL_HEIGHT / 2);
-    mCollider = { mPos.x, mPos.y, PLAYER_WIDTH, PLAYER_HEIGHT };
+    mCollider = mAttackCollider = { mPos.x, mPos.y, PLAYER_WIDTH, PLAYER_HEIGHT };
     mForce = mVelX = mVelY = 0;
 
     mHP = PLAYER_MAX_HP;
     mStrength = 0;
-    mAttackCollider = { mPos.x - mStrength, mPos.y - mStrength, PLAYER_WIDTH + mStrength * 2, PLAYER_HEIGHT + mStrength * 2 };
 
     gotHit = false;
+    gotBlock = false;
     isAlive = true;
     isAppear = true;
+
+    for (int i = 0; i < TOTAL_PARTICLES; ++i)
+    {
+        particles[i] = new Particle(mAttackCollider, gRedTexture);
+    }
 }
 
 Player::Player(SDL_Renderer* gRenderer, LTexture& gRedTexture)
 {
     renderer = gRenderer;
 
-    for (int i = 0; i < TOTAL_PARTICLES; ++i)
-    {
-        particles[i] = new Particle(mCollider, gRedTexture);
-    }
-
     mPos.set(LEVEL_WIDTH / 2, LEVEL_HEIGHT / 2);
-    mCollider = { mPos.x, mPos.y, PLAYER_WIDTH, PLAYER_HEIGHT };
+    mCollider = mAttackCollider = { mPos.x, mPos.y, PLAYER_WIDTH, PLAYER_HEIGHT };
     mForce = mVelX = mVelY = 0;
 
     mHP = PLAYER_MAX_HP;
     mStrength = 0;
-    mAttackCollider = { mPos.x - mStrength, mPos.y - mStrength, PLAYER_WIDTH + mStrength * 2, PLAYER_HEIGHT + mStrength * 2 };
     
     gotHit = false;
+    gotBlock = false;
     isAlive = true;
     isAppear = true;
+
+    for (int i = 0; i < TOTAL_PARTICLES; ++i)
+    {
+        particles[i] = new Particle(mCollider, gRedTexture);
+    }
 }
 
 Player::~Player()
@@ -111,23 +111,39 @@ void Player::updateVel(const int& x, const int& y)
 
 void Player::updateStrength(const int& score)
 {
-    mStrength = (score < 24)? (score * 2) : 48;
+    mStrength = (score < 50)? (score) : 50;
     mAttackCollider = { mPos.x - mStrength, mPos.y - mStrength, PLAYER_WIDTH + mStrength * 2, PLAYER_HEIGHT + mStrength * 2 };
 }
 
-void Player::react(const SDL_Rect& enemyCollider, const bool& enemyAttack)
+void Player::react(const bool& eIsAttack, const SDL_Rect& eAttackCollider)
 {
-    if (isAlive)
+    if (gotBlock)
     {
-        if (!getIsAttack() && enemyAttack && checkCollision(mCollider, enemyCollider))
-        {
-            gotHit = true;
-            mHP--;
-        }
-        if (mHP <= 0)
-        {
-            die();
-        }
+        mForce = 0;
+
+        mPos.x -= mVelX;
+        mCollider.x = mPos.x;
+
+        mPos.y -= mVelY;
+        mCollider.y = mPos.y;
+
+        gotBlock = false;
+    }
+    if (!getIsAttack() && eIsAttack && checkCollision(mCollider, eAttackCollider))
+    {
+        gotHit = true;
+        mHP--;
+    }
+    if (mHP <= 0)
+    {
+        mHP = 0;
+        isAlive = false;
+        mForce = FORCE_CAPABILITY;
+    }
+    if (!isAlive && mTime.wait(TIME_BEFORE_DISAPPEAR))
+    {
+        isAppear = false;
+        mTime.stop();
     }
 }
 
@@ -217,39 +233,30 @@ void Player::renderParticles(LTexture& gRedTexture, const SDL_Rect& camera)
     }
 }
 
-void Player::die()
-{
-    mForce = FORCE_CAPABILITY;
-    for (int i = 0; i < TOTAL_PARTICLES; ++i)
-    {
-        particles[i]->reset(mCollider);
-    }
-    isAlive = false;
-    mCollider.y = -9999;
-}
-
-void Player::render(LTexture& gPlayerTexture, LTexture& gRedTexture, LTexture& gBlueSlash, LTexture& gRedSword, LTexture& gRedCircle, const SDL_Rect& camera, Mix_Chunk* gSwordSlash)
+void Player::render(LTexture& gPlayerTexture, LTexture& gRedTexture, LTexture& gBlueSlashTexture, LTexture& gWeaponTexture, LTexture& gRedCircleTexture, const SDL_Rect& camera, Mix_Chunk* gSwordSlashSound)
 {
     if (isAlive)
     {
+        //Lose blood -> lose red color
+        gPlayerTexture.setColor(255 * (mHP * 1.0 / PLAYER_MAX_HP), 255, 255);
         gPlayerTexture.render(renderer, mPos.x - camera.x, mPos.y - camera.y, NULL, 0.0, 0, flip);
-        if (gotHit)
-        {
-            gBlueSlash.render(renderer, mPos.x - PLAYER_WIDTH / 2 - camera.x, mPos.y - PLAYER_HEIGHT / 2 - camera.y, NULL, 0.0, 0, flip);
-            Mix_PlayChannel(-1, gSwordSlash, 0);
-            gotHit = false;
-        }
+
         if (isHold)
         {
             //Show red cicle at mouse position
-            gRedCircle.render(renderer, initPos.x - PLAYER_WIDTH/4, initPos.y - PLAYER_HEIGHT/4);
-            gRedCircle.render(renderer, lastPos.x - PLAYER_WIDTH/4, lastPos.y - PLAYER_HEIGHT/4);
+            gRedCircleTexture.render(renderer, initPos.x - PLAYER_WIDTH / 4, initPos.y - PLAYER_HEIGHT / 4);
+            gRedCircleTexture.render(renderer, lastPos.x - PLAYER_WIDTH / 4, lastPos.y - PLAYER_HEIGHT / 4);
             //Show player direction
-            gRedSword.render(renderer, mPos.x - camera.x - PLAYER_WIDTH, mPos.y - camera.y - PLAYER_HEIGHT, NULL, swordAngle, 0);
+            gWeaponTexture.render(renderer, mPos.x - camera.x - PLAYER_WIDTH, mPos.y - camera.y - PLAYER_HEIGHT, NULL, swordAngle, 0);
         }
-        //Lose blood -> lose red color
-        gPlayerTexture.setColor(255 * (mHP*1.0/PLAYER_MAX_HP), 255, 255);
     }
+    if (gotHit)
+    {
+        gBlueSlashTexture.render(renderer, mPos.x - PLAYER_WIDTH / 2 - camera.x, mPos.y - PLAYER_HEIGHT / 2 - camera.y, NULL, 0.0, 0, flip);
+        Mix_PlayChannel(-1, gSwordSlashSound, 0);
+        gotHit = false;
+    }
+    
     renderParticles(gRedTexture, camera);
 }
 

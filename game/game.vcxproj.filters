@@ -13,18 +13,18 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
+    <Filter Include="Resource Files\Characters">
+      <UniqueIdentifier>{206b1534-1afa-4b22-8933-8e6392a46949}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Characters">
+      <UniqueIdentifier>{e6f58d87-bd22-4bc4-9772-b8904f389fe3}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Game.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="Player.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="Enemy.cpp">
+    <ClCompile Include="Game_Base.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="Others.cpp">
@@ -39,9 +39,6 @@
     <ClCompile Include="Particle.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Rogue.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="Tile.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -51,15 +48,24 @@
     <ClCompile Include="Game_Utils.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Rogue.cpp">
+      <Filter>Source Files\Characters</Filter>
+    </ClCompile>
+    <ClCompile Include="Paladin.cpp">
+      <Filter>Source Files\Characters</Filter>
+    </ClCompile>
+    <ClCompile Include="Assassin.cpp">
+      <Filter>Source Files\Characters</Filter>
+    </ClCompile>
+    <ClCompile Include="Enemy.cpp">
+      <Filter>Source Files\Characters</Filter>
+    </ClCompile>
+    <ClCompile Include="Player.cpp">
+      <Filter>Source Files\Characters</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="Game.h">
-      <Filter>Resource Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Player.h">
-      <Filter>Resource Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Enemy.h">
+    <ClInclude Include="Game_Base.h">
       <Filter>Resource Files</Filter>
     </ClInclude>
     <ClInclude Include="Others.h">
@@ -74,9 +80,6 @@
     <ClInclude Include="Particle.h">
       <Filter>Resource Files</Filter>
     </ClInclude>
-    <ClInclude Include="Rogue.h">
-      <Filter>Resource Files</Filter>
-    </ClInclude>
     <ClInclude Include="Tile.h">
       <Filter>Resource Files</Filter>
     </ClInclude>
@@ -85,6 +88,21 @@
     </ClInclude>
     <ClInclude Include="Game_Utils.h">
       <Filter>Resource Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Assassin.h">
+      <Filter>Resource Files\Characters</Filter>
+    </ClInclude>
+    <ClInclude Include="Paladin.h">
+      <Filter>Resource Files\Characters</Filter>
+    </ClInclude>
+    <ClInclude Include="Rogue.h">
+      <Filter>Resource Files\Characters</Filter>
+    </ClInclude>
+    <ClInclude Include="Enemy.h">
+      <Filter>Resource Files\Characters</Filter>
+    </ClInclude>
+    <ClInclude Include="Player.h">
+      <Filter>Resource Files\Characters</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

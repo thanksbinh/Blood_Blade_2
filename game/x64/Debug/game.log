@@ -1,17 +1,3 @@
-﻿  Enemy.cpp
-C:\Users\binh1\Desktop\Blood_Blade_2\game\Enemy.cpp(180,40): warning C4244: 'argument': conversion from 'double' to 'int', possible loss of data
-C:\Users\binh1\Desktop\Blood_Blade_2\game\Enemy.cpp(180,37): warning C4244: 'argument': conversion from 'double' to 'int', possible loss of data
-C:\Users\binh1\Desktop\Blood_Blade_2\game\Enemy.cpp(180,23): warning C4244: '=': conversion from 'double' to 'int', possible loss of data
-C:\Users\binh1\Desktop\Blood_Blade_2\game\Enemy.cpp(181,40): warning C4244: 'argument': conversion from 'double' to 'int', possible loss of data
-C:\Users\binh1\Desktop\Blood_Blade_2\game\Enemy.cpp(181,37): warning C4244: 'argument': conversion from 'double' to 'int', possible loss of data
-C:\Users\binh1\Desktop\Blood_Blade_2\game\Enemy.cpp(181,23): warning C4244: '=': conversion from 'double' to 'int', possible loss of data
-  Player.cpp
-C:\Users\binh1\Desktop\Blood_Blade_2\game\Player.cpp(11,1): warning C4005: 'M_PI': macro redefinition
-C:\vclib\SDL2-2.0.20\include\SDL_stdinc.h(568): message : see previous definition of 'M_PI'
-C:\Users\binh1\Desktop\Blood_Blade_2\game\Player.cpp(108,36): warning C4244: '=': conversion from 'double' to 'int', possible loss of data
-C:\Users\binh1\Desktop\Blood_Blade_2\game\Player.cpp(109,36): warning C4244: '=': conversion from 'double' to 'int', possible loss of data
-C:\Users\binh1\Desktop\Blood_Blade_2\game\Player.cpp(251,37): warning C4244: 'argument': conversion from 'double' to 'Uint8', possible loss of data
-  Rogue.cpp
-  main.cpp
-  Generating Code...
+﻿  main.cpp
+C:\Users\binh1\Desktop\Blood_Blade_2\game\main.cpp(56,12): warning C4244: 'argument': conversion from 'time_t' to 'unsigned int', possible loss of data
   game.vcxproj -> C:\Users\binh1\Desktop\Blood_Blade_2\game\x64\Debug\game.exe
