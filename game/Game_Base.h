@@ -1,16 +1,6 @@
-#ifndef GAME_H_
-#define GAME_H_
-
-#include <SDL.h>
-#include <SDL_image.h>
-#include <SDL_ttf.h>
-#include <SDL_mixer.h>
-#include <stdio.h>
-#include <string>
-#include <sstream>
-#include <vector>
-#include <fstream>
-#include <time.h>
+#pragma once
+#ifndef GAME_BASE_H_
+#define GAME_BASE_H_
 
 //The dimensions of the level
 const int LEVEL_WIDTH = 1280;
@@ -19,6 +9,7 @@ const int LEVEL_HEIGHT = 960;
 //Screen dimension constants
 const int SCREEN_WIDTH = 640;
 const int SCREEN_HEIGHT = 480;
+const int SCREEN_MARGIN = 10;
 
 //Tile constants
 const int TILE_WIDTH = 40;
@@ -43,18 +34,22 @@ static const int PLAYER_HEIGHT = 40;
 //The dimensions of the enemy
 static const int ENEMY_WIDTH = 40;
 static const int ENEMY_HEIGHT = 40;
-static const int BULLET_SIZE = 5;
+static const int SHURIKEN_SIZE = 10;
 
 //Particle count
 static const int TOTAL_PARTICLES = 20;
 
+//Enemy count
 static const int TOTAL_ENEMY_1 = 3;
 static const int TOTAL_ENEMY_2 = 3;
 static const int TOTAL_ENEMY_3 = 3;
 
 //Number of data integers
-static const int TOTAL_DATA = 11;
+static const int TOTAL_DATA = 10;
 
+//Characters
 static const int TIME_BEFORE_DISAPPEAR = 200;
 
-#endif /* Game_h */
+static const int RED_CIRCLE_SIZE = 20;
+
+#endif

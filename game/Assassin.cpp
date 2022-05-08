@@ -48,7 +48,7 @@ void Assassin::move(const SDL_Rect& pCollider, Tile* tiles[])
 {
     if (isAlive)
     {
-        Point pPos(pCollider.x + PLAYER_WIDTH / 3, pCollider.y + PLAYER_HEIGHT / 3);
+        Point pPos(pCollider.x, pCollider.y);
 
         if (mVelX < 0) bodyFlip = SDL_FLIP_HORIZONTAL;
         else if (mVelX > 0) bodyFlip = SDL_FLIP_NONE;
@@ -58,7 +58,7 @@ void Assassin::move(const SDL_Rect& pCollider, Tile* tiles[])
             if (mTime.wait(TIME_AFTER_ATTACK))
             {
                 updateVel(pPos);
-                mAttackCollider = { mCollider.x + ENEMY_WIDTH / 3, mCollider.y + ENEMY_HEIGHT / 3, ENEMY_WIDTH / 4, ENEMY_HEIGHT / 4 };
+                mAttackCollider = { mCollider.x + ENEMY_WIDTH / 3, mCollider.y + ENEMY_HEIGHT / 3, SHURIKEN_SIZE, SHURIKEN_SIZE };
                 mTime.stop();
             }
             else
@@ -74,10 +74,10 @@ void Assassin::move(const SDL_Rect& pCollider, Tile* tiles[])
             updateVel(pPos);
 
             mPos.x += mVelX;
-            mCollider.x = mAttackCollider.x = mPos.x;
-
             mPos.y += mVelY;
-            mCollider.y = mAttackCollider.y = mPos.y;
+
+            mCollider = { mPos.x, mPos.y, ENEMY_WIDTH, ENEMY_HEIGHT };
+            mAttackCollider = { mCollider.x + ENEMY_WIDTH / 3, mCollider.y + ENEMY_HEIGHT / 3, SHURIKEN_SIZE, SHURIKEN_SIZE };
         }
     }
     else isAttack = false;

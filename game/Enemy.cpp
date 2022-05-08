@@ -149,11 +149,11 @@ void Enemy::attack(Tile* tiles[])
 
 void Enemy::updateVel(const Point& pPos)
 {
-    double x = pPos.x - mPos.x;
-    double y = pPos.y - mPos.y;
+    int x = pPos.x - mPos.x;
+    int y = pPos.y - mPos.y;
 
-    mVelX = ENEMY_VEL * (x / pytago(x, y));
-    mVelY = ENEMY_VEL * (y / pytago(x, y));
+    mVelX = round((double)ENEMY_VEL * x / pytago(x, y));
+    mVelY = round((double)ENEMY_VEL * y / pytago(x, y));
 }
 
 void Enemy::renderParticles(LTexture& gRedTexture, const SDL_Rect& camera)

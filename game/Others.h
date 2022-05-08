@@ -2,14 +2,7 @@
 #define OTHERS_H_
 
 #include <SDL.h>
-#include <SDL_image.h>
-#include <stdio.h>
 #include <iostream>
-#include <string>
-#include <fstream>
-
-#include "LTimer.h"
-#include "Tile.h"
 
 struct Point
 {
@@ -25,10 +18,6 @@ double pytago(int a, int b);
 
 int distance(const Point& p1, const Point& p2);
 
-//Checks collision box against set of tiles
-int touchesWall(const SDL_Rect& box, Tile* tiles[]);
-
-//Sets tiles from tile map
-bool setTiles(Tile* tiles[], SDL_Rect gTileClips[]);
+int checkCollision(SDL_Rect a, SDL_Rect b);
 
 #endif // !OTHER_H_

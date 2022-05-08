@@ -1,13 +1,6 @@
 #include "Player.h"
-#include "Others.h"
-#include "LTimer.h"
 #include <math.h>
-#include <sstream>
-#include <SDL_ttf.h>
 
-#define FORCE_SPEED 1/10
-#define FORCE_CAPABILITY 100
-#define FORCE_LOSS 2
 #define M_PI 3.14159265358979323846
 
 Player::Player()
@@ -18,9 +11,12 @@ Player::Player()
 
     mHP = PLAYER_MAX_HP;
     mStrength = 0;
+    scoreToUltimate = STRENGTH_TO_NEXT_ULTIMATE;
 
     gotHit = false;
     gotBlock = false;
+    canUltimate = false;
+    isUltimate = false;
     isAlive = true;
     isAppear = true;
 }
@@ -35,9 +31,12 @@ void Player::init(SDL_Renderer* gRenderer, LTexture& gRedTexture)
 
     mHP = PLAYER_MAX_HP;
     mStrength = 0;
+    scoreToUltimate = STRENGTH_TO_NEXT_ULTIMATE;
 
     gotHit = false;
     gotBlock = false;
+    canUltimate = false;
+    isUltimate = false;
     isAlive = true;
     isAppear = true;
 
@@ -57,9 +56,12 @@ Player::Player(SDL_Renderer* gRenderer, LTexture& gRedTexture)
 
     mHP = PLAYER_MAX_HP;
     mStrength = 0;
-    
+    scoreToUltimate = STRENGTH_TO_NEXT_ULTIMATE;
+
     gotHit = false;
     gotBlock = false;
+    canUltimate = false;
+    isUltimate = false;
     isAlive = true;
     isAppear = true;
 
@@ -87,7 +89,7 @@ void Player::handleEvent(SDL_Event& e, const SDL_Rect& camera)
     if (e.type == SDL_MOUSEBUTTONDOWN && !isHold)
     {
         SDL_GetMouseState(&initPos.x, &initPos.y);
-        if (mPos.x - camera.x < initPos.x && initPos.x < mPos.x - camera.x + PLAYER_WIDTH && mPos.y - camera.y < initPos.y && initPos.y < mPos.y - camera.y + PLAYER_HEIGHT)
+        if (mAttackCollider.x - camera.x < initPos.x && initPos.x < mAttackCollider.x + mAttackCollider.w - camera.x && mPos.y - camera.y < initPos.y && initPos.y < mAttackCollider.y + mAttackCollider.h - camera.y)
         {
             isHold = true;
             mTime.start();
@@ -101,18 +103,50 @@ void Player::handleEvent(SDL_Event& e, const SDL_Rect& camera)
 
         std::cerr << "Final remainVel " << mForce << std::endl;
     }
+
+    if (e.type == SDL_KEYDOWN)
+    {
+        switch (e.key.keysym.sym)
+        {
+        case SDLK_SPACE:
+            //Ultimate
+            std::cerr << "ultimate" << std::endl;
+            if (canUltimate) isUltimate = true;
+            break;
+        }
+    }
 }
 
 void Player::updateVel(const int& x, const int& y)
 {
-    mVelX = PLAYER_VEL * (x * 1.0) / pytago(x, y);
-    mVelY = PLAYER_VEL * (y * 1.0) / pytago(x, y);
+    mVelX = round((double)PLAYER_VEL * x / pytago(x, y));
+    mVelY = round((double)PLAYER_VEL * y / pytago(x, y));
 }
 
 void Player::updateStrength(const int& score)
 {
-    mStrength = (score < 50)? (score) : 50;
-    mAttackCollider = { mPos.x - mStrength, mPos.y - mStrength, PLAYER_WIDTH + mStrength * 2, PLAYER_HEIGHT + mStrength * 2 };
+    if (score >= scoreToUltimate)
+    {
+        canUltimate = true;
+    }
+    if (isUltimate)
+    {
+        mForce = FORCE_CAPABILITY;
+        mAttackCollider = { 0, 0, LEVEL_WIDTH, LEVEL_HEIGHT };
+
+        if (mTime.wait(ULTIMATE_TIME))
+        {
+            scoreToUltimate += STRENGTH_TO_NEXT_ULTIMATE;
+            canUltimate = false;
+            isUltimate = false;
+            mTime.stop();
+        }
+    }
+    else
+    {
+        mStrength = (score < 50) ? (score) : 50;
+        mAttackCollider = { mPos.x - mStrength, mPos.y - mStrength, PLAYER_WIDTH + mStrength * 2, PLAYER_HEIGHT + mStrength * 2 };
+    }
 }
 
 void Player::react(const bool& eIsAttack, const SDL_Rect& eAttackCollider)
@@ -151,8 +185,8 @@ void Player::move(Tile* tiles[])
 {
     if (isAlive)
     {
-        if (mVelX < 0) flip = SDL_FLIP_HORIZONTAL;
-        else if (mVelX > 0) flip = SDL_FLIP_NONE;
+        if (mVelX < 0) bodyFlip = SDL_FLIP_HORIZONTAL;
+        else if (mVelX > 0) bodyFlip = SDL_FLIP_NONE;
 
         updateForce();
         if (mForce > 0)
@@ -163,16 +197,16 @@ void Player::move(Tile* tiles[])
             mPos.y += mVelY;
             mCollider.y = mPos.y;
 
-            if ((mPos.x < 0) || (mPos.x + PLAYER_WIDTH > LEVEL_WIDTH) || touchesWall(mCollider, tiles) == TILE_LEFTRIGHT || touchesWall(mCollider, tiles) == TILE_CORNER)
+            if ((mPos.x < 0) || (mPos.x + PLAYER_WIDTH > LEVEL_WIDTH) || touchesWall(mCollider, tiles) == TILE_LEFTRIGHT)
             {
                 mVelX = -mVelX;
-                mForce += FORCE_LOSS;
+                mPos.x += mVelX;
             }
 
-            if ((mPos.y < 0) || (mPos.y + PLAYER_HEIGHT > LEVEL_HEIGHT) || touchesWall(mCollider, tiles) == TILE_TOPBOTTOM || touchesWall(mCollider, tiles) == TILE_CORNER)
+            if ((mPos.y < 0) || (mPos.y + PLAYER_HEIGHT > LEVEL_HEIGHT) || touchesWall(mCollider, tiles) == TILE_TOPBOTTOM)
             {
                 mVelY = -mVelY;
-                mForce += FORCE_LOSS;
+                mPos.y += mVelY;
             }
 
             mForce -= FORCE_LOSS;
@@ -188,7 +222,7 @@ void Player::updateForce()
 {
     if (isHold)
     {
-        mForce = (mTime.getTicks() * FORCE_SPEED) % (2 * FORCE_CAPABILITY);
+        mForce = (mTime.getTicks() / FORCE_SLOW_DOWN) % (2 * FORCE_CAPABILITY);
         if (mForce > FORCE_CAPABILITY) mForce = 2 * FORCE_CAPABILITY - mForce;
     }
 }
@@ -233,26 +267,36 @@ void Player::renderParticles(LTexture& gRedTexture, const SDL_Rect& camera)
     }
 }
 
-void Player::render(LTexture& gPlayerTexture, LTexture& gRedTexture, LTexture& gBlueSlashTexture, LTexture& gWeaponTexture, LTexture& gRedCircleTexture, const SDL_Rect& camera, Mix_Chunk* gSwordSlashSound)
+void Player::render(LTexture& gPlayerTexture, LTexture& gRedTexture, LTexture& gBlueSlashTexture, LTexture& gWeaponTexture, LTexture& gRedCircleTexture, LTexture& gUltimateTexture, const SDL_Rect& camera, Mix_Chunk* gSwordSlashSound)
 {
     if (isAlive)
     {
         //Lose blood -> lose red color
-        gPlayerTexture.setColor(255 * (mHP * 1.0 / PLAYER_MAX_HP), 255, 255);
-        gPlayerTexture.render(renderer, mPos.x - camera.x, mPos.y - camera.y, NULL, 0.0, 0, flip);
+        double mHPpercent = (mHP * 1.0 / PLAYER_MAX_HP);
+        gPlayerTexture.setColor(255 * mHPpercent, 255, 255);
+        gPlayerTexture.render(renderer, mPos.x - camera.x, mPos.y - camera.y, NULL, 0.0, 0, bodyFlip);
 
         if (isHold)
         {
-            //Show red cicle at mouse position
-            gRedCircleTexture.render(renderer, initPos.x - PLAYER_WIDTH / 4, initPos.y - PLAYER_HEIGHT / 4);
-            gRedCircleTexture.render(renderer, lastPos.x - PLAYER_WIDTH / 4, lastPos.y - PLAYER_HEIGHT / 4);
+            //Show red cicle at first and present mouse position
+            gRedCircleTexture.render(renderer, initPos.x - RED_CIRCLE_SIZE / 2, initPos.y - RED_CIRCLE_SIZE / 2);
+            gRedCircleTexture.render(renderer, lastPos.x - RED_CIRCLE_SIZE / 2, lastPos.y - RED_CIRCLE_SIZE / 2);
             //Show player direction
-            gWeaponTexture.render(renderer, mPos.x - camera.x - PLAYER_WIDTH, mPos.y - camera.y - PLAYER_HEIGHT, NULL, swordAngle, 0);
+            gWeaponTexture.render(renderer, mPos.x - camera.x - PLAYER_WIDTH, mPos.y - camera.y - PLAYER_HEIGHT, NULL, swordAngle);
+        }
+        if (canUltimate)
+        {
+            gUltimateTexture.render(renderer, SCREEN_MARGIN, SCREEN_MARGIN);
+        }
+        if (isUltimate)
+        {
+            for (int i = 0; i < 10; i++)
+                gWeaponTexture.render(renderer, rand() % SCREEN_WIDTH, rand() % SCREEN_HEIGHT, NULL, 180);
         }
     }
     if (gotHit)
     {
-        gBlueSlashTexture.render(renderer, mPos.x - PLAYER_WIDTH / 2 - camera.x, mPos.y - PLAYER_HEIGHT / 2 - camera.y, NULL, 0.0, 0, flip);
+        gBlueSlashTexture.render(renderer, mPos.x - PLAYER_WIDTH / 2 - camera.x, mPos.y - PLAYER_HEIGHT / 2 - camera.y, NULL, 0.0, 0, bodyFlip);
         Mix_PlayChannel(-1, gSwordSlashSound, 0);
         gotHit = false;
     }

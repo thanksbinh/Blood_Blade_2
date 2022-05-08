@@ -6,7 +6,8 @@
 
 #include "Game_Base.h"
 #include "LTexture.h"
-#include "Collision.h"
+#include "Others.h"
+#include <fstream>
 
 class Tile
 {
@@ -30,5 +31,11 @@ private:
 	//The tile type
 	int mType;
 };
+
+//Sets tiles from tile map
+bool setTiles(Tile* tiles[], SDL_Rect gTileClips[]);
+
+//Checks collision box against set of tiles
+int touchesWall(const SDL_Rect& box, Tile* tiles[]);
 
 #endif // !TILE_H_

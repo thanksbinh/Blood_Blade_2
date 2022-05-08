@@ -1,34 +1,50 @@
+#include <SDL.h>
+#include <SDL_image.h>
+#include <SDL_ttf.h>
+#include <SDL_mixer.h>
+
+#include <iostream>
+#include <string>
+#include <sstream>
+#include <fstream>
+#include <time.h>
+
 #include "Game_Base.h"
 #include "Game_Utils.h"
 #include "LTexture.h"
-#include "Others.h"
+#include "Tile.h"
 #include "Player.h"
 #include "Enemy.h"
 #include "Rogue.h"
 #include "Paladin.h"
 #include "Assassin.h"
-#include "LTimer.h"
 
 SDL_Window* gWindow = NULL;
 SDL_Renderer* gRenderer = NULL;
 TTF_Font* gFont = NULL;
-SDL_Color gTextColor = { 0xFF, 0xFF, 0xFF, 0xFF };
-SDL_Color gHighlightColor = { 0xFF, 0, 0, 0xFF };
+const SDL_Color gTextColor = { 0xFF, 0xFF, 0xFF, 0xFF };
+const SDL_Color gHighlightColor = { 0xFF, 0, 0, 0xFF };
 
-//Characters
-LTexture gLogoTexture;
+//Screen texture
+LTexture gMenuTexture;
+LTexture gMenuHelpTexture;
+LTexture gMenuCreditTexture;
+LTexture gGameOverTexture;
+
+//Characters texture
 LTexture gPlayerTexture;
 LTexture gRogueTexture;
 LTexture gPaladinTexture;
 LTexture gAssassinTexture;
 
-//Effect, items
+//Effect, items texture
 LTexture gRedDotTexture;
 LTexture gRedSlashTexture;
 LTexture gBlueSlashTexture;
 LTexture gRedSwordTexture;
 LTexture gShurikenTexture;
 LTexture gRedCircleTexture;
+LTexture gUltimateTexture;
 
 //Music, sound effects
 Mix_Music* gOpeningMusic = NULL;
@@ -43,13 +59,14 @@ SDL_Rect gTileClips[TOTAL_TILE_SPRITES];
 //Text
 LTexture gScoreTextTexture;
 LTexture gPromptTextTexture;
-LTexture gDataTextures[TOTAL_DATA];
-int gData[TOTAL_DATA];
+LTexture gRankDataTextures[TOTAL_DATA];
+int gRankData[TOTAL_DATA];
 
+//Characters
 Player player;
-Enemy* enemy1 = new Rogue[TOTAL_ENEMY_1];
-Enemy* enemy2 = new Paladin[TOTAL_ENEMY_2];
-Enemy* enemy3 = new Assassin[TOTAL_ENEMY_3];
+Rogue* enemy1 = new Rogue[TOTAL_ENEMY_1];
+Paladin* enemy2 = new Paladin[TOTAL_ENEMY_2];
+Assassin* enemy3 = new Assassin[TOTAL_ENEMY_3];
 
 int main(int argc, char* args[])
 {
@@ -69,68 +86,94 @@ int main(int argc, char* args[])
 		}
 		else
 		{
-			bool quitMenu = false;
-			bool playGame = false;
+			bool gameIsRunning = true;
+			bool gameInMenu = true;
 
-			Mix_PlayMusic(gOpeningMusic, -1);
-
-			SDL_Rect camera = { 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT };
-
-			while (!quitMenu)
+			while (gameIsRunning)
 			{
+				SDL_Rect camera = { 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT };
+
 				SDL_Event e;
 
-				while (SDL_PollEvent(&e) != 0)
+				Uint8 alpha = 0;
+
+				bool gameOver = false;
+				bool gamePause = false;
+
+				bool menuHelp = false;
+				bool menuCredit = false;
+
+				Mix_PlayMusic(gOpeningMusic, -1);
+
+				while (gameInMenu)
 				{
-					if (e.type == SDL_QUIT)
+					while (SDL_PollEvent(&e) != 0)
 					{
-						quitMenu = true;
-						playGame = false;
+						if (e.type == SDL_QUIT)
+						{
+							//Quit game
+							gameInMenu = false;
+							gameOver = true;
+							gameIsRunning = false;
+						}
+						else if (e.type == SDL_KEYDOWN)
+						{
+							switch (e.key.keysym.sym)
+							{
+							case SDLK_h:
+								//Help menu
+								menuHelp = !menuHelp;
+								menuCredit = false;
+								break;
+							case SDLK_c:
+								//Credit menu
+								menuCredit = !menuCredit;
+								menuHelp = false;
+								break;
+							}
+						}
+						else if (e.type == SDL_MOUSEBUTTONDOWN)
+						{
+							if (menuHelp || menuCredit)
+							{
+								menuHelp = false;
+								menuCredit = false;
+							}
+							else
+							{
+								gameInMenu = false;
+								alpha = 0;
+							}
+						}
 					}
-					else if (e.type == SDL_MOUSEBUTTONDOWN)
+
+					//Motion
+					increaseAlpha(alpha, 3);
+					camera.x = (camera.x + 1) % (LEVEL_WIDTH - SCREEN_WIDTH);
+
+					//Draw
+					SDL_SetRenderDrawColor(gRenderer, 0xFF, 0xFF, 0xFF, 0xFF);
+					SDL_RenderClear(gRenderer);
+
+					gTileTexture.setAlpha(alpha);
+					for (int i = 0; i < TOTAL_TILES; ++i)
 					{
-						quitMenu = true;
-						playGame = true;
+						tileSet[i]->render(gRenderer, gTileTexture, gTileClips, camera);
 					}
+
+					gMenuTexture.setAlpha(alpha);
+					gMenuTexture.render(gRenderer, 0, 0);
+
+					if (menuHelp) gMenuHelpTexture.render(gRenderer, 0, 0);
+					if (menuCredit) gMenuCreditTexture.render(gRenderer, 0, 0);
+
+					SDL_RenderPresent(gRenderer);
 				}
 
-				camera.x = (camera.x + 1) % (LEVEL_WIDTH - SCREEN_WIDTH);
-
-				//Draw to screen
-				SDL_SetRenderDrawColor(gRenderer, 0xFF, 0xFF, 0xFF, 0xFF);
-				SDL_RenderClear(gRenderer);
-
-				//Render level
-				for (int i = 0; i < TOTAL_TILES; ++i)
-				{
-					tileSet[i]->render(gRenderer, gTileTexture, gTileClips, camera);
-				}
-
-				//Render prompt text
-				gPromptTextTexture.loadFromRenderedText(gRenderer, gFont, "Click to play", gTextColor);
-				gPromptTextTexture.render(gRenderer, (SCREEN_WIDTH - gPromptTextTexture.getWidth()) / 2, (SCREEN_HEIGHT - gPromptTextTexture.getHeight()) / 2);
-
-				gLogoTexture.render(gRenderer, (SCREEN_WIDTH - gLogoTexture.getWidth()) / 2, 100);
-
-				SDL_RenderPresent(gRenderer);
-			}
-
-			while (playGame)
-			{
-				bool quit = false;
-				bool pause = false;
-
-				Mix_PlayMusic(gBattleMusic, -1);
-				
-				SDL_Event e;
-
-				LTimer time;
+				int score = 0;
+				int rank = -1;
 
 				std::stringstream scoreText;
-
-				//Score = enemy killed
-				int score = 0;
-				int rank = 0;
 
 				int numOfEnemy1 = 0;
 				int numOfEnemy2 = 0;
@@ -150,41 +193,67 @@ int main(int argc, char* args[])
 					enemy3[i].init(gRenderer, gRedDotTexture);
 				}
 
-				while (!quit)
+				Mix_PlayMusic(gBattleMusic, -1);
+
+				while (!gameOver)
 				{
 					while (SDL_PollEvent(&e) != 0)
 					{
 						if (e.type == SDL_QUIT)
 						{
-							quit = true;
-							playGame = false;
+							//Quit game
+							gameOver = true;
+							gameIsRunning = false;
 						}
-						else if (e.type == SDL_KEYDOWN)
+						else if (e.type == SDL_KEYDOWN && player.getIsAppear())
 						{
 							switch (e.key.keysym.sym)
 							{
 							case SDLK_r:
 								//Reset game
-								quit = true;
+								gameOver = true;
 								break;
 							case SDLK_p:
-								//Pause game
-								pause = !pause;
+								//Pause, unpause game
+								gamePause = !gamePause;
+								break;
+							case SDLK_q:
+								//Quit to menu
+								gameOver = true;
+								gameInMenu = true;
 								break;
 							}
 						}
 						else if (e.type == SDL_MOUSEBUTTONDOWN)
 						{
-							if (pause) pause = false;
-							if (!player.getIsAppear()) quit = true;
+							if (!player.getIsAppear())
+							{
+								gameOver = true;
+								gameInMenu = true;
+							}
+							if (gamePause)
+								gamePause = false;
 						}
-
-						if (!pause)
+						if (!gamePause)
 							player.handleEvent(e, camera);
 					}
-					
-					if (player.getIsAppear() && !pause)
+
+					if (gamePause)
 					{
+						Mix_PauseMusic();
+						gamePauseScreen();
+					}
+					else if (!player.getIsAppear())
+					{
+						rankCalculation(score, rank, gRankData);
+						gameEndScreen(rank);
+					}
+					else
+					{
+						if (Mix_PausedMusic() == 1) Mix_ResumeMusic();
+
+						increaseAlpha(alpha, 3);
+
 						updateNumOfEnemy(score, numOfEnemy1, numOfEnemy2, numOfEnemy3);
 
 						player.setCamera(camera);
@@ -238,26 +307,29 @@ int main(int argc, char* args[])
 								score++;
 							}
 						}
-
+						
 						//Draw to screen
 						SDL_SetRenderDrawColor(gRenderer, 0xFF, 0xFF, 0xFF, 0xFF);
 						SDL_RenderClear(gRenderer);
 
 						//Render level
+						gTileTexture.setAlpha(alpha);
 						for (int i = 0; i < TOTAL_TILES; ++i)
 						{
 							tileSet[i]->render(gRenderer, gTileTexture, gTileClips, camera);
 						}
 
-						//Render score text
+						//Calculate score (= enemy killed)
 						scoreText.str("");
 						scoreText << "YOUR SCORE: " << score;
 
+						//Render score text
 						gScoreTextTexture.loadFromRenderedText(gRenderer, gFont, scoreText.str().c_str(), gTextColor);
-						gScoreTextTexture.render(gRenderer, SCREEN_WIDTH - gScoreTextTexture.getWidth() - 10, 10);
+						gScoreTextTexture.render(gRenderer, SCREEN_WIDTH - (gScoreTextTexture.getWidth() + SCREEN_MARGIN), SCREEN_MARGIN);
 
 						//Render characters
-						player.render(gPlayerTexture, gRedDotTexture, gBlueSlashTexture, gRedSwordTexture, gRedCircleTexture, camera, gSwordSlashSound);
+						gPlayerTexture.setAlpha(alpha);
+						player.render(gPlayerTexture, gRedDotTexture, gBlueSlashTexture, gRedSwordTexture, gRedCircleTexture, gUltimateTexture, camera, gSwordSlashSound);
 
 						for (int i = 0; i < numOfEnemy1; i++)
 						{
@@ -274,25 +346,11 @@ int main(int argc, char* args[])
 
 						SDL_RenderPresent(gRenderer);
 					}
-
-					if (pause)
-					{
-						Mix_PauseMusic();
-						gamePauseScreen();
-					}
-					else
-					{
-						if (Mix_PausedMusic() == 1) Mix_ResumeMusic();
-					}
-
-					if (!player.getIsAppear())
-					{
-						gameEndScreen(score, rank);
-					}
 				}
-			}
-			close(tileSet);
-		}
+			} 
+		} 
+
+		close(tileSet);
 	}
 	return 0;
 }
@@ -305,33 +363,26 @@ void gamePauseScreen()
 	SDL_RenderPresent(gRenderer);
 }
 
-void gameEndScreen(const int& score, int& rank)
+void gameEndScreen(const int& rank)
 {
 	std::stringstream rankText;
-	rankCalculation(score, rank, gData);
+	
+	gGameOverTexture.render(gRenderer, 0, 0);
 
-	gPromptTextTexture.loadFromRenderedText(gRenderer, gFont, "You die!", gHighlightColor);
-	gPromptTextTexture.render(gRenderer, (SCREEN_WIDTH - gPromptTextTexture.getWidth()) / 2, 50);
-
-	gPromptTextTexture.loadFromRenderedText(gRenderer, gFont, "Click to play again", gHighlightColor);
-	gPromptTextTexture.render(gRenderer, (SCREEN_WIDTH - gPromptTextTexture.getWidth()) / 2, SCREEN_HEIGHT - 50);
-
-	//Show rank board
+	//Rank board
 	for (int i = 0; i < TOTAL_DATA; ++i)
 	{
 		rankText.str("");
-		if (i == 0) rankText.str("Rank");
-		else rankText << i;
+		rankText << i + 1;
 
-		gDataTextures[i].loadFromRenderedText(gRenderer, gFont, rankText.str().c_str(), (i == rank || i == 0) ? gHighlightColor : gTextColor);
-		gDataTextures[i].render(gRenderer, SCREEN_WIDTH / 3 - gDataTextures[i].getWidth() / 2, 100 + gDataTextures[0].getHeight() * i);
+		gRankDataTextures[i].loadFromRenderedText(gRenderer, gFont, rankText.str().c_str(), (i == rank) ? gHighlightColor : gTextColor);
+		gRankDataTextures[i].render(gRenderer, SCREEN_WIDTH / 3 - gRankDataTextures[i].getWidth() / 2, 150 + gRankDataTextures[0].getHeight() * i);
 
 		rankText.str("");
-		if (i == 0) rankText.str("Score");
-		else rankText << gData[i];
+		rankText << gRankData[i];
 
-		gDataTextures[i].loadFromRenderedText(gRenderer, gFont, rankText.str().c_str(), (i == rank || i == 0) ? gHighlightColor : gTextColor);
-		gDataTextures[i].render(gRenderer, SCREEN_WIDTH * 2 / 3 - gDataTextures[i].getWidth() / 2, 100 + gDataTextures[0].getHeight() * i);
+		gRankDataTextures[i].loadFromRenderedText(gRenderer, gFont, rankText.str().c_str(), (i == rank) ? gHighlightColor : gTextColor);
+		gRankDataTextures[i].render(gRenderer, SCREEN_WIDTH * 2 / 3 - gRankDataTextures[i].getWidth() / 2, 150 + gRankDataTextures[0].getHeight() * i);
 	}
 
 	SDL_RenderPresent(gRenderer);
@@ -357,7 +408,7 @@ bool init()
 		}
 
 		//Create window
-		gWindow = SDL_CreateWindow("SDL Tutorial", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, SCREEN_WIDTH, SCREEN_HEIGHT, SDL_WINDOW_SHOWN);
+		gWindow = SDL_CreateWindow("Blood Blade", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, SCREEN_WIDTH, SCREEN_HEIGHT, SDL_WINDOW_SHOWN);
 		if (gWindow == NULL)
 		{
 			printf("Window could not be created! SDL Error: %s\n", SDL_GetError());
@@ -410,10 +461,31 @@ bool loadMedia(Tile* tiles[])
 	//Loading success flag
 	bool success = true;
 
-	//Load logo texture
-	if (!gLogoTexture.loadFromFile(gRenderer, "assets/logo.png", 274, 34))
+	//Load menu texture
+	if (!gMenuTexture.loadFromFile(gRenderer, "assets/home-screen.png", SCREEN_WIDTH, SCREEN_HEIGHT))
 	{
-		printf("Failed to load logo texture!\n");
+		printf("Failed to load menu texture!\n");
+		success = false;
+	}
+
+	//Load menu help texture
+	if (!gMenuHelpTexture.loadFromFile(gRenderer, "assets/menu-help.png", SCREEN_WIDTH, SCREEN_HEIGHT))
+	{
+		printf("Failed to load menu help texture!\n");
+		success = false;
+	}
+
+	//Load menu credit texture
+	if (!gMenuCreditTexture.loadFromFile(gRenderer, "assets/menu-credit.png", SCREEN_WIDTH, SCREEN_HEIGHT))
+	{
+		printf("Failed to load menu credit texture!\n");
+		success = false;
+	}
+
+	//Load game over texture
+	if (!gGameOverTexture.loadFromFile(gRenderer, "assets/game-over.png", SCREEN_WIDTH, SCREEN_HEIGHT))
+	{
+		printf("Failed to load game over texture!\n");
 		success = false;
 	}
 
@@ -445,7 +517,7 @@ bool loadMedia(Tile* tiles[])
 		success = false;
 	}
 
-	//Load tile texture
+	//Load tile set texture
 	if (!gTileTexture.loadFromFile(gRenderer, "assets/tiles.png", 120, 240))
 	{
 		printf("Failed to load tile set texture!\n");
@@ -467,7 +539,7 @@ bool loadMedia(Tile* tiles[])
 	}
 
 	//Load red slash
-	if (!gRedSlashTexture.loadFromFile(gRenderer, "assets/red-slash.png", PLAYER_WIDTH * 2, PLAYER_HEIGHT * 2))
+	if (!gRedSlashTexture.loadFromFile(gRenderer, "assets/red-slash.png", ENEMY_WIDTH * 2, ENEMY_HEIGHT * 2))
 	{
 		printf("Failed to load red slash!\n");
 		success = false;
@@ -488,16 +560,23 @@ bool loadMedia(Tile* tiles[])
 	}
 
 	//Load shuriken
-	if (!gShurikenTexture.loadFromFile(gRenderer, "assets/shuriken.png", PLAYER_WIDTH / 4, PLAYER_HEIGHT / 4))
+	if (!gShurikenTexture.loadFromFile(gRenderer, "assets/shuriken.png", SHURIKEN_SIZE, SHURIKEN_SIZE))
 	{
 		printf("Failed to load red sword!\n");
 		success = false;
 	}
 
 	//Load red circle
-	if (!gRedCircleTexture.loadFromFile(gRenderer, "assets/red-circle.png", PLAYER_WIDTH / 2, PLAYER_HEIGHT / 2))
+	if (!gRedCircleTexture.loadFromFile(gRenderer, "assets/red-circle.png", RED_CIRCLE_SIZE, RED_CIRCLE_SIZE))
 	{
 		printf("Failed to load red circle!\n");
+		success = false;
+	}
+
+	//Load ultimate
+	if (!gUltimateTexture.loadFromFile(gRenderer, "assets/ultimate.png", 40, 40))
+	{
+		printf("Failed to load ultimate !\n");
 		success = false;
 	}
 
@@ -532,8 +611,8 @@ bool loadMedia(Tile* tiles[])
 			//Initialize data
 			for (int i = 0; i < TOTAL_DATA; ++i)
 			{
-				gData[i] = 0;
-				SDL_RWwrite(file, &gData[i], sizeof(gData[0]), 1);
+				gRankData[i] = 0;
+				SDL_RWwrite(file, &gRankData[i], sizeof(gRankData[0]), 1);
 			}
 
 			//Close file handler
@@ -552,14 +631,14 @@ bool loadMedia(Tile* tiles[])
 		printf("Reading file...!\n");
 		for (int i = 0; i < TOTAL_DATA; ++i)
 		{
-			SDL_RWread(file, &gData[i], sizeof(gData[0]), 1);
+			SDL_RWread(file, &gRankData[i], sizeof(gRankData[0]), 1);
 		}
 
 		//Close file handler
 		SDL_RWclose(file);
 	}
 
-	//Load music
+	//Load opening music
 	gOpeningMusic = Mix_LoadMUS("assets/Need to Be Strong.mp3");
 	if (gOpeningMusic == NULL)
 	{
@@ -567,6 +646,7 @@ bool loadMedia(Tile* tiles[])
 		success = false;
 	}
 
+	//Load battle music
 	gBattleMusic = Mix_LoadMUS("assets/Raikiri.mp3");
 	if (gBattleMusic == NULL)
 	{
@@ -574,17 +654,19 @@ bool loadMedia(Tile* tiles[])
 		success = false;
 	}
 
-	//Load sound effect
+	//Load Sword Slash Sound effect
 	gSwordSlashSound = Mix_LoadWAV("assets/sword_slash.wav");
 	if (gSwordSlashSound == NULL)
 	{
-		printf("Failed to load Sword Slash effect! SDL_mixer Error: %s\n", Mix_GetError());
+		printf("Failed to load Sword Slash Sound effect! SDL_mixer Error: %s\n", Mix_GetError());
 		success = false;
 	}
+
+	//Load Sword Slash Metal Sound effect
 	gSwordSlashMetalSound = Mix_LoadWAV("assets/sword_slash_metal.wav");
 	if (gSwordSlashMetalSound == NULL)
 	{
-		printf("Failed to load Sword Slash Metal effect! SDL_mixer Error: %s\n", Mix_GetError());
+		printf("Failed to load Sword Slash Metal Sound effect! SDL_mixer Error: %s\n", Mix_GetError());
 		success = false;
 	}
 
@@ -604,7 +686,11 @@ void close(Tile* tiles[])
 	}
 
 	//Free loaded images
-	gLogoTexture.free();
+	gMenuTexture.free();
+	gMenuHelpTexture.free();
+	gMenuCreditTexture.free();
+	gGameOverTexture.free();
+
 	gPlayerTexture.free();
 	gRogueTexture.free();
 	gPaladinTexture.free();
@@ -612,12 +698,20 @@ void close(Tile* tiles[])
 
 	gScoreTextTexture.free();
 	gPromptTextTexture.free();
+
 	gRedDotTexture.free();
 	gRedSlashTexture.free();
 	gBlueSlashTexture.free();
 	gRedSwordTexture.free();
 	gShurikenTexture.free();
 	gRedCircleTexture.free();
+	gUltimateTexture.free();
+
+	gPromptTextTexture.free();
+	for (int i = 0; i < TOTAL_DATA; ++i)
+	{
+		gRankDataTextures[i].free();
+	}
 
 	//Open data for writing
 	SDL_RWops* file = SDL_RWFromFile("save/nums.bin", "w+b");
@@ -626,7 +720,7 @@ void close(Tile* tiles[])
 		//Save data
 		for (int i = 0; i < TOTAL_DATA; ++i)
 		{
-			SDL_RWwrite(file, &gData[i], sizeof(gData[0]), 1);
+			SDL_RWwrite(file, &gRankData[i], sizeof(gRankData[0]), 1);
 		}
 
 		//Close file handler
@@ -635,13 +729,6 @@ void close(Tile* tiles[])
 	else
 	{
 		printf("Error: Unable to save file! %s\n", SDL_GetError());
-	}
-
-	//Free loaded images
-	gPromptTextTexture.free();
-	for (int i = 0; i < TOTAL_DATA; ++i)
-	{
-		gDataTextures[i].free();
 	}
 
 	//Free global font

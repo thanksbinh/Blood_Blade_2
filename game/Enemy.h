@@ -4,13 +4,12 @@
 #include <SDL.h>
 #include <SDL_image.h>
 #include <SDL_mixer.h>
-#include <stdio.h>
-#include <string>
 #include <iostream>
 
 #include "Game_Base.h"
 #include "LTexture.h"
 #include "Player.h"
+#include "Tile.h"
 #include "Others.h"
 #include "Particle.h"
 #include "LTimer.h"

@@ -2,17 +2,6 @@
 #ifndef ASSASSIN_H_
 #define ASSASSIN_H_
 
-#include <SDL.h>
-#include <SDL_image.h>
-#include <stdio.h>
-#include <string>
-#include <iostream>
-
-#include "Game_Base.h"
-#include "LTexture.h"
-#include "Others.h"
-#include "Particle.h"
-#include "LTimer.h"
 #include "Enemy.h"
 
 class Assassin : public Enemy
