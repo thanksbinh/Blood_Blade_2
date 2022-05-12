@@ -28,28 +28,28 @@ const int TILE_TOPBOTTOM = 6;
 const int TILE_CORNER = 7;
 
 //The dimensions of the player
-static const int PLAYER_WIDTH = 40;
-static const int PLAYER_HEIGHT = 40;
+const int PLAYER_WIDTH = 40;
+const int PLAYER_HEIGHT = 40;
+const int RED_CIRCLE_SIZE = 20;
+const int ULTIMATE_ICON_SIZE = 40;
 
 //The dimensions of the enemy
-static const int ENEMY_WIDTH = 40;
-static const int ENEMY_HEIGHT = 40;
-static const int SHURIKEN_SIZE = 10;
-
-//Particle count
-static const int TOTAL_PARTICLES = 20;
+const int ENEMY_WIDTH = 40;
+const int ENEMY_HEIGHT = 40;
+const int SHURIKEN_SIZE = 10;
 
 //Enemy count
-static const int TOTAL_ENEMY_1 = 3;
-static const int TOTAL_ENEMY_2 = 3;
-static const int TOTAL_ENEMY_3 = 3;
+const int TOTAL_ENEMY_1 = 3;
+const int TOTAL_ENEMY_2 = 3;
+const int TOTAL_ENEMY_3 = 3;
+
+//Time before characters disappear after die
+const int TIME_BEFORE_DISAPPEAR = 200;
+
+//Particle count
+const int TOTAL_PARTICLES = 20;
 
 //Number of data integers
-static const int TOTAL_DATA = 10;
-
-//Characters
-static const int TIME_BEFORE_DISAPPEAR = 200;
-
-static const int RED_CIRCLE_SIZE = 20;
+const int TOTAL_DATA = 10;
 
 #endif

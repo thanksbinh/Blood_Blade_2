@@ -10,7 +10,7 @@
 #include "LTexture.h"
 #include "Player.h"
 #include "Tile.h"
-#include "Others.h"
+#include "Geometry.h"
 #include "Particle.h"
 #include "LTimer.h"
 
@@ -18,29 +18,40 @@ class Enemy
 {
 public:
 	static const int ENEMY_VEL = 5;
-	static const int ENEMY_MAX_HP = 5;
-	static const int TIME_BEFORE_ATTACK = 200;
+	static const int ENEMY_MAX_HP = 6;
+	static const int TIME_BEFORE_ATTACK = 250;
 	static const int ATTACK_RANGE = 100;
 
 	Enemy();
 	Enemy(SDL_Renderer* gRenderer, LTexture& gRedTexture);
-	~Enemy();
+	virtual ~Enemy();
 
+	//Init enemy
 	void init(SDL_Renderer* gRenderer, LTexture& gRedTexture);
-	void respawn(Tile* tiles[], const SDL_Rect& camera);
 
-	//Lose HP if (player attacking, collide with player), die when player not attacking, disappear after 0.1s
+	//Respawn enemy in wall tiles and not in camera
+	virtual void respawn(Tile* tiles[], const SDL_Rect& camera);
+
+	//Update enemy's stats
 	virtual void react(Player& player);
 
-	//Attack, move base on player's position
+	//Move close to player
 	virtual void move(const SDL_Rect& pCollider, Tile* tiles[]);
-	virtual void attack(Tile* tiles[]);
+
+	//Attack player
+	virtual void attack(Tile* tiles[]) {}
+
+	//Update enemy's velocity
 	virtual void updateVel(const Point& pPos);
+
+	//Render particles
+	void renderParticles(LTexture& gRedTexture, const SDL_Rect& camera);
 
 	//Render enemy, effects, sounds
 	void render(LTexture& gEnemyTexture, LTexture& gRedTexture, LTexture& gRedSlashTexture, const SDL_Rect& camera, Mix_Chunk* gSwordSlashSound);
+
+	//Render with weapon
 	void render(LTexture& gEnemyTexture, LTexture& gRedTexture, LTexture& gRedSlashTexture, LTexture& gWeaponTexture, const SDL_Rect& camera, Mix_Chunk* gSwordSlashSound);
-	void renderParticles(LTexture& gRedTexture, const SDL_Rect& camera);
 
 	SDL_Rect getCollider() { return mCollider; }
 	SDL_Rect getAttackCollider() { return mAttackCollider; }

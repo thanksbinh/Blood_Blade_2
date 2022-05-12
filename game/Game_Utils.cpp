@@ -32,7 +32,7 @@ void updateNumOfEnemy(const int& score, int& numOfEnemy1, int& numOfEnemy2, int&
 	if (score >= 25)
 	{
 		numOfEnemy1 = 2;
-		numOfEnemy2 = 2;
+		numOfEnemy2 = 1;
 		numOfEnemy3 = 1;
 	}
 	if (score >= 50)
@@ -43,19 +43,13 @@ void updateNumOfEnemy(const int& score, int& numOfEnemy1, int& numOfEnemy2, int&
 	}
 	if (score >= 100)
 	{
-		numOfEnemy1 = 1;
-		numOfEnemy2 = 2;
-		numOfEnemy3 = TOTAL_ENEMY_3;
-	}
-	if (score >= 150)
-	{
 		numOfEnemy1 = TOTAL_ENEMY_1;
 		numOfEnemy2 = TOTAL_ENEMY_2;
 		numOfEnemy3 = TOTAL_ENEMY_3;
 	}
 }
 
-void rankCalculation(const int& score, int& rank, int gData[])
+void calculateRank(const int& score, int& rank, int gData[])
 {
 	if (rank == -1)
 	{

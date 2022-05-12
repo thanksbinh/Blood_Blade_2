@@ -71,33 +71,31 @@ void Enemy::respawn(Tile* tiles[], const SDL_Rect& camera)
     isAlive = true;
     isAppear = true;
     isAttack = false;
-    //Respawn random in wall tiles, but not in camera
+
     do {
         mCollider.x = rand() % (LEVEL_WIDTH - ENEMY_WIDTH);
         mCollider.y = rand() % (LEVEL_HEIGHT - ENEMY_HEIGHT);
-    } while (checkCollision(mCollider, camera) || touchesWall(mCollider, tiles) < TILE_LEFTRIGHT);
+    } while (checkCollision(mCollider, camera) || touchesWall(mCollider, tiles) <= TILE_4);
+
     mPos.set(mCollider.x, mCollider.y);
     mAttackCollider = mCollider;
 }
 
 void Enemy::react(Player& player)
 {
-    if (isAlive)
+    //Take damage
+    if (player.getIsAttack() && checkCollision(mCollider, player.getAttackCollider()))
     {
-        //Take damage
-        if (player.getIsAttack() && checkCollision(mCollider, player.getAttackCollider()))
+        gotHit = true;
+        mHP--;
+    }
+    //Die
+    if (isAlive && !player.getIsAttack() && mHP <= 0)
+    {
+        isAlive = false;
+        for (int i = 0; i < TOTAL_PARTICLES; ++i)
         {
-            gotHit = true;
-            mHP--;
-        }
-        //Die
-        if (!player.getIsAttack() && mHP <= 0)
-        {
-            isAlive = false;
-            for (int i = 0; i < TOTAL_PARTICLES; ++i)
-            {
-                particles[i]->reset(mCollider);
-            }
+            particles[i]->reset(mCollider);
         }
     }
     //Gone
@@ -142,18 +140,16 @@ void Enemy::move(const SDL_Rect& pCollider, Tile* tiles[])
     else isAttack = false;
 }
 
-void Enemy::attack(Tile* tiles[])
-{
-    
-}
-
 void Enemy::updateVel(const Point& pPos)
 {
     int x = pPos.x - mPos.x;
     int y = pPos.y - mPos.y;
 
-    mVelX = round((double)ENEMY_VEL * x / pytago(x, y));
-    mVelY = round((double)ENEMY_VEL * y / pytago(x, y));
+    if (pytago(x, y) != 0)
+    {
+        mVelX = round((double)ENEMY_VEL * x / pytago(x, y));
+        mVelY = round((double)ENEMY_VEL * y / pytago(x, y));
+    }
 }
 
 void Enemy::renderParticles(LTexture& gRedTexture, const SDL_Rect& camera)
@@ -165,10 +161,7 @@ void Enemy::renderParticles(LTexture& gRedTexture, const SDL_Rect& camera)
             delete particles[i];
             particles[i] = new Particle(mCollider, gRedTexture);
         }
-    }
 
-    for (int i = 0; i < TOTAL_PARTICLES; ++i)
-    {
         particles[i]->render(renderer, camera);
     }
 }

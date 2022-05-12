@@ -17,7 +17,6 @@ public:
 	void stop();
 	void pause();
 	void unpause();
-
 	bool wait(const int& millisecond);
 
 	//Gets the timer's time

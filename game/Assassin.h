@@ -7,7 +7,7 @@
 class Assassin : public Enemy
 {
 public:
-	static const int ATTACK_RANGE = 240;
+	static const int ATTACK_RANGE = 200;
 	static const int TIME_AFTER_ATTACK = 1000;
 	static const int ATTACK_SPEED = 2;
 	static const int SPIN_SPEED = 15;
@@ -17,6 +17,7 @@ public:
 	~Assassin();
 
 	void move(const SDL_Rect& pCollider, Tile* tiles[]);
+
 	void attack();
 
 private:

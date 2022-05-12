@@ -11,7 +11,7 @@ Player::Player()
 
     mHP = PLAYER_MAX_HP;
     mStrength = 0;
-    scoreToUltimate = STRENGTH_TO_NEXT_ULTIMATE;
+    scoreToUltimate = SCORE_TO_NEXT_ULTIMATE;
 
     gotHit = false;
     gotBlock = false;
@@ -31,7 +31,7 @@ void Player::init(SDL_Renderer* gRenderer, LTexture& gRedTexture)
 
     mHP = PLAYER_MAX_HP;
     mStrength = 0;
-    scoreToUltimate = STRENGTH_TO_NEXT_ULTIMATE;
+    scoreToUltimate = SCORE_TO_NEXT_ULTIMATE;
 
     gotHit = false;
     gotBlock = false;
@@ -56,7 +56,7 @@ Player::Player(SDL_Renderer* gRenderer, LTexture& gRedTexture)
 
     mHP = PLAYER_MAX_HP;
     mStrength = 0;
-    scoreToUltimate = STRENGTH_TO_NEXT_ULTIMATE;
+    scoreToUltimate = SCORE_TO_NEXT_ULTIMATE;
 
     gotHit = false;
     gotBlock = false;
@@ -89,7 +89,9 @@ void Player::handleEvent(SDL_Event& e, const SDL_Rect& camera)
     if (e.type == SDL_MOUSEBUTTONDOWN && !isHold)
     {
         SDL_GetMouseState(&initPos.x, &initPos.y);
-        if (mAttackCollider.x - camera.x < initPos.x && initPos.x < mAttackCollider.x + mAttackCollider.w - camera.x && mPos.y - camera.y < initPos.y && initPos.y < mAttackCollider.y + mAttackCollider.h - camera.y)
+        SDL_Rect mPicture = { mPos.x - camera.x, mPos.y - camera.y, PLAYER_WIDTH, PLAYER_HEIGHT };
+        SDL_Rect mouse = { initPos.x, initPos.y, 0, 0 };
+        if (checkCollision(mPicture, mouse))
         {
             isHold = true;
             mTime.start();
@@ -100,8 +102,6 @@ void Player::handleEvent(SDL_Event& e, const SDL_Rect& camera)
         updateVel((initPos.x - lastPos.x), (initPos.y - lastPos.y));
         isHold = false;
         mTime.stop();
-
-        std::cerr << "Final remainVel " << mForce << std::endl;
     }
 
     if (e.type == SDL_KEYDOWN)
@@ -109,8 +109,6 @@ void Player::handleEvent(SDL_Event& e, const SDL_Rect& camera)
         switch (e.key.keysym.sym)
         {
         case SDLK_SPACE:
-            //Ultimate
-            std::cerr << "ultimate" << std::endl;
             if (canUltimate) isUltimate = true;
             break;
         }
@@ -119,11 +117,14 @@ void Player::handleEvent(SDL_Event& e, const SDL_Rect& camera)
 
 void Player::updateVel(const int& x, const int& y)
 {
-    mVelX = round((double)PLAYER_VEL * x / pytago(x, y));
-    mVelY = round((double)PLAYER_VEL * y / pytago(x, y));
+    if (pytago(x, y) != 0) 
+    {
+        mVelX = round((double)PLAYER_VEL * x / pytago(x, y));
+        mVelY = round((double)PLAYER_VEL * y / pytago(x, y));
+    }
 }
 
-void Player::updateStrength(const int& score)
+void Player::updateAttackCollider(const int& score)
 {
     if (score >= scoreToUltimate)
     {
@@ -136,7 +137,7 @@ void Player::updateStrength(const int& score)
 
         if (mTime.wait(ULTIMATE_TIME))
         {
-            scoreToUltimate += STRENGTH_TO_NEXT_ULTIMATE;
+            scoreToUltimate += SCORE_TO_NEXT_ULTIMATE;
             canUltimate = false;
             isUltimate = false;
             mTime.stop();
@@ -259,10 +260,7 @@ void Player::renderParticles(LTexture& gRedTexture, const SDL_Rect& camera)
             delete particles[i];
             particles[i] = new Particle(mAttackCollider, gRedTexture);
         }
-    }
 
-    for (int i = 0; i < mForce/5 && i < TOTAL_PARTICLES; ++i)
-    {
         particles[i]->render(renderer, camera);
     }
 }
@@ -271,8 +269,8 @@ void Player::render(LTexture& gPlayerTexture, LTexture& gRedTexture, LTexture& g
 {
     if (isAlive)
     {
-        //Lose blood -> lose red color
-        double mHPpercent = (mHP * 1.0 / PLAYER_MAX_HP);
+        //Lose blood -> player lose red color
+        double mHPpercent = (double)mHP / PLAYER_MAX_HP;
         gPlayerTexture.setColor(255 * mHPpercent, 255, 255);
         gPlayerTexture.render(renderer, mPos.x - camera.x, mPos.y - camera.y, NULL, 0.0, 0, bodyFlip);
 
@@ -281,6 +279,7 @@ void Player::render(LTexture& gPlayerTexture, LTexture& gRedTexture, LTexture& g
             //Show red cicle at first and present mouse position
             gRedCircleTexture.render(renderer, initPos.x - RED_CIRCLE_SIZE / 2, initPos.y - RED_CIRCLE_SIZE / 2);
             gRedCircleTexture.render(renderer, lastPos.x - RED_CIRCLE_SIZE / 2, lastPos.y - RED_CIRCLE_SIZE / 2);
+
             //Show player direction
             gWeaponTexture.render(renderer, mPos.x - camera.x - PLAYER_WIDTH, mPos.y - camera.y - PLAYER_HEIGHT, NULL, swordAngle);
         }
@@ -290,15 +289,16 @@ void Player::render(LTexture& gPlayerTexture, LTexture& gRedTexture, LTexture& g
         }
         if (isUltimate)
         {
+            //Sword rain
             for (int i = 0; i < 10; i++)
                 gWeaponTexture.render(renderer, rand() % SCREEN_WIDTH, rand() % SCREEN_HEIGHT, NULL, 180);
         }
-    }
-    if (gotHit)
-    {
-        gBlueSlashTexture.render(renderer, mPos.x - PLAYER_WIDTH / 2 - camera.x, mPos.y - PLAYER_HEIGHT / 2 - camera.y, NULL, 0.0, 0, bodyFlip);
-        Mix_PlayChannel(-1, gSwordSlashSound, 0);
-        gotHit = false;
+        if (gotHit)
+        {
+            gBlueSlashTexture.render(renderer, mPos.x - camera.x - PLAYER_WIDTH / 2, mPos.y - camera.y - PLAYER_HEIGHT / 2, NULL, 0.0, 0, bodyFlip);
+            Mix_PlayChannel(-1, gSwordSlashSound, 0);
+            gotHit = false;
+        }
     }
     
     renderParticles(gRedTexture, camera);

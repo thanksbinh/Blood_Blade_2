@@ -30,3 +30,4 @@
 *.exe
 *.out
 *.app
+game/x64/Debug/game.pdb

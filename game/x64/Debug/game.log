@@ -1,3 +1,1 @@
-﻿  main.cpp
-C:\Users\binh1\Desktop\Blood_Blade_2\game\main.cpp(73,12): warning C4244: 'argument': conversion from 'time_t' to 'unsigned int', possible loss of data
-  game.vcxproj -> C:\Users\binh1\Desktop\Blood_Blade_2\game\x64\Debug\game.exe
+﻿  game.vcxproj -> C:\Users\binh1\Desktop\Blood_Blade_2\game\x64\Debug\game.exe

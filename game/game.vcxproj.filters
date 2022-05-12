@@ -27,7 +27,7 @@
     <ClCompile Include="Game_Base.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Others.cpp">
+    <ClCompile Include="Geometry.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="LTexture.cpp">
@@ -65,7 +65,7 @@
     <ClInclude Include="Game_Base.h">
       <Filter>Resource Files</Filter>
     </ClInclude>
-    <ClInclude Include="Others.h">
+    <ClInclude Include="Geometry.h">
       <Filter>Resource Files</Filter>
     </ClInclude>
     <ClInclude Include="LTexture.h">

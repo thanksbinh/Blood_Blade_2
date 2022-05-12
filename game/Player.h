@@ -10,7 +10,7 @@
 #include "LTexture.h"
 #include "LTimer.h"
 #include "Tile.h"
-#include "Others.h"
+#include "Geometry.h"
 #include "Particle.h"
 
 class Player
@@ -22,34 +22,41 @@ public:
 	static const int FORCE_CAPABILITY = 100;
 	static const int FORCE_LOSS = 2;
 	static const int ULTIMATE_TIME = 200;
-	static const int STRENGTH_TO_NEXT_ULTIMATE = 25;
+	static const int SCORE_TO_NEXT_ULTIMATE = 25;
 
 	Player();
 	Player(SDL_Renderer* gRenderer, LTexture& gRedTexture);
 	~Player();
 
+	//Init player
 	void init(SDL_Renderer* gRenderer, LTexture& gRedTexture);
 
-	//Update sword angle, velocity base on (initPos - lastPos)
+	//Update sword angle, mouse's init and last position
 	void handleEvent(SDL_Event& e, const SDL_Rect& camera);
+
+	//Update x, y velocity
 	void updateVel(const int& x, const int& y);
 
-	//Strength = attack range = damage/frame
-	void updateStrength(const int& score);
+	//Update player's attack collider
+	void updateAttackCollider(const int& score);
 
-	//Lose HP if (player not attacking, enemy attacking, collide with enemy)
+	//Update player's stats 
 	void react(const bool& eIsAttack, const SDL_Rect& eAttackCollider);
 
-	//Update position base on velocity, update force base on mouse hold time
+	//Update player's position
 	void move(Tile* tiles[]);
+
+	//Update player's force when hold
 	void updateForce();
 
-	//Centers the camera over the dot
+	//Centers the camera over player
 	void setCamera(SDL_Rect& camera);
+
+	//Render particles
+	void renderParticles(LTexture& gRedTexture, const SDL_Rect& camera);
 
 	//Render player, effects, sounds
 	void render(LTexture& gPlayerTexture, LTexture& gRedTexture, LTexture& gBlueSlashTexture, LTexture& gWeaponTexture, LTexture& gRedCircleTexture, LTexture& gUltimateTexture, const SDL_Rect& camera, Mix_Chunk* gSwordSlashSound);
-	void renderParticles(LTexture& gRedTexture, const SDL_Rect& camera);
 
 	SDL_Rect getCollider() { return mCollider; }
 	SDL_Rect getAttackCollider() { return mAttackCollider; }

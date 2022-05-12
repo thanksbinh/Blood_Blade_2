@@ -6,7 +6,7 @@
 
 #include "Game_Base.h"
 #include "LTexture.h"
-#include "Others.h"
+#include "Geometry.h"
 #include <fstream>
 
 class Tile
@@ -19,10 +19,10 @@ public:
 	void render(SDL_Renderer* gRenderer, LTexture& gTileTexture, SDL_Rect gTileClips[], const SDL_Rect& camera);
 
 	//Get the tile type
-	int getType();
+	int getType() { return mType; }
 
 	//Get the collision box
-	SDL_Rect getBox();
+	SDL_Rect getBox() { return mBox; }
 
 private:
 	//The attributes of the tile

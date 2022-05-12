@@ -8,10 +8,13 @@ class Paladin : public Enemy
 {
 public:
 	static const int ENEMY_VEL = 3;
+	static const int ENEMY_MAX_HP = 12;
 
 	Paladin();
 	Paladin(SDL_Renderer* gRenderer, LTexture& gRedTexture);
 	~Paladin();
+
+	void respawn(Tile* tiles[], const SDL_Rect& camera);
 	
 	void react(Player& player);
 
