@@ -31,4 +31,4 @@
 *.out
 *.app
 game/x64/Debug/game.pdb
-game/.vs
+game/.vs/
