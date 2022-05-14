@@ -357,9 +357,9 @@ void renderPauseScreen()
 
 void renderEndScreen(const int& rank)
 {
-	std::stringstream rankText;
-	
 	gGameOverTexture.render(gRenderer, 0, 0);
+
+	std::stringstream rankText;
 
 	//Rank board
 	for (int i = 0; i < TOTAL_DATA; ++i)

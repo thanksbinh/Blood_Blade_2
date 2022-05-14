@@ -21,6 +21,7 @@ public:
 	static const int FORCE_SLOW_DOWN = 10;
 	static const int FORCE_CAPABILITY = 100;
 	static const int FORCE_LOSS = 2;
+	static const int PLAYER_MAX_STRENGTH = 50;
 	static const int ULTIMATE_TIME = 200;
 	static const int SCORE_TO_NEXT_ULTIMATE = 25;
 
@@ -52,7 +53,7 @@ public:
 	//Centers the camera over player
 	void setCamera(SDL_Rect& camera);
 
-	//Render particles
+	//Render particles ~ mForce
 	void renderParticles(LTexture& gRedTexture, const SDL_Rect& camera);
 
 	//Render player, effects, sounds

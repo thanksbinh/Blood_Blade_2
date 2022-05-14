@@ -23,25 +23,25 @@ void updateNumOfEnemy(const int& score, int& numOfEnemy1, int& numOfEnemy2, int&
 		numOfEnemy2 = 0;
 		numOfEnemy3 = 0;
 	}
-	if (score >= 10)
+	if (score >= 5)
 	{
 		numOfEnemy1 = 2;
 		numOfEnemy2 = 1;
 		numOfEnemy3 = 0;
 	}
-	if (score >= 25)
+	if (score >= 8)
 	{
 		numOfEnemy1 = 2;
 		numOfEnemy2 = 1;
 		numOfEnemy3 = 1;
 	}
-	if (score >= 50)
+	if (score >= 11)
 	{
 		numOfEnemy1 = 1;
 		numOfEnemy2 = 2;
 		numOfEnemy3 = 2;
 	}
-	if (score >= 100)
+	if (score >= 15)
 	{
 		numOfEnemy1 = TOTAL_ENEMY_1;
 		numOfEnemy2 = TOTAL_ENEMY_2;

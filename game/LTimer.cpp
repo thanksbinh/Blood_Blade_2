@@ -76,7 +76,7 @@ bool LTimer::wait(const int& millisecond)
         mWait = true;
         start();
     }
-    else if (getTicks() > millisecond)
+    else if (getTicks() >= millisecond)
     {
         return true;
     }

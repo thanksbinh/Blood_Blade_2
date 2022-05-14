@@ -56,14 +56,16 @@ void Rogue::attack(Tile* tiles[])
     mPos.y += mVelY * ATTACK_SPEED;
     mCollider.y = mAttackCollider.y = mPos.y;
 
-    if ((mPos.x < 0) || (mPos.x + PLAYER_WIDTH > LEVEL_WIDTH) || touchesWall(mCollider, tiles) == TILE_LEFTRIGHT || touchesWall(mCollider, tiles) == TILE_CORNER)
+    if ((mPos.x < 0) || (mPos.x + ENEMY_WIDTH > LEVEL_WIDTH) || touchesWall(mCollider, tiles) == TILE_LEFTRIGHT)
     {
         mVelX = -mVelX;
+        mPos.x += mVelX * ATTACK_SPEED;
     }
 
-    if ((mPos.y < 0) || (mPos.y + PLAYER_HEIGHT > LEVEL_HEIGHT) || touchesWall(mCollider, tiles) == TILE_TOPBOTTOM || touchesWall(mCollider, tiles) == TILE_CORNER)
+    if ((mPos.y < 0) || (mPos.y + ENEMY_WIDTH > LEVEL_HEIGHT) || touchesWall(mCollider, tiles) == TILE_TOPBOTTOM)
     {
         mVelY = -mVelY;
+        mPos.y += mVelY * ATTACK_SPEED;
     }
 
     bodyAngle += SPIN_SPEED;

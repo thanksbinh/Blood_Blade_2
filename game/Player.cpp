@@ -145,7 +145,7 @@ void Player::updateAttackCollider(const int& score)
     }
     else
     {
-        mStrength = (score < 50) ? (score) : 50;
+        mStrength = (score < PLAYER_MAX_STRENGTH) ? (score) : PLAYER_MAX_STRENGTH;
         mAttackCollider = { mPos.x - mStrength, mPos.y - mStrength, PLAYER_WIDTH + mStrength * 2, PLAYER_HEIGHT + mStrength * 2 };
     }
 }
