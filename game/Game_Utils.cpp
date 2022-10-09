@@ -11,41 +11,71 @@ void increaseAlpha(Uint8& alpha, const int& n)
 
 void updateNumOfEnemy(const int& score, int& numOfEnemy1, int& numOfEnemy2, int& numOfEnemy3)
 {
-	if (score < 3)
+	if (score < LEVEL1)
 	{
 		numOfEnemy1 = 1;
 		numOfEnemy2 = 0;
 		numOfEnemy3 = 0;
 	}
-	if (score >= 3)
+	if (score >= LEVEL1)
 	{
 		numOfEnemy1 = 2;
 		numOfEnemy2 = 0;
 		numOfEnemy3 = 0;
 	}
-	if (score >= 5)
+	if (score >= LEVEL2)
+	{
+		numOfEnemy1 = 1;
+		numOfEnemy2 = 1;
+		numOfEnemy3 = 0;
+	}
+	if (score >= LEVEL3)
 	{
 		numOfEnemy1 = 2;
 		numOfEnemy2 = 1;
 		numOfEnemy3 = 0;
 	}
-	if (score >= 8)
+	if (score >= LEVEL4)
 	{
-		numOfEnemy1 = 2;
+		numOfEnemy1 = 1;
 		numOfEnemy2 = 1;
 		numOfEnemy3 = 1;
 	}
-	if (score >= 11)
+	if (score >= LEVEL5)
+	{
+		numOfEnemy1 = 1;
+		numOfEnemy2 = 2;
+		numOfEnemy3 = 1;
+	}
+	if (score >= LEVEL6)
 	{
 		numOfEnemy1 = 1;
 		numOfEnemy2 = 2;
 		numOfEnemy3 = 2;
 	}
-	if (score >= 15)
+	if (score >= LEVEL7)
 	{
-		numOfEnemy1 = TOTAL_ENEMY_1;
-		numOfEnemy2 = TOTAL_ENEMY_2;
-		numOfEnemy3 = TOTAL_ENEMY_3;
+		numOfEnemy1 = 1;
+		numOfEnemy2 = 3;
+		numOfEnemy3 = 2;
+	}
+	if (score >= LEVEL8)
+	{
+		numOfEnemy1 = 1;
+		numOfEnemy2 = 3;
+		numOfEnemy3 = 3;
+	}
+	if (score >= LEVEL9)
+	{
+		numOfEnemy1 = 2;
+		numOfEnemy2 = 3;
+		numOfEnemy3 = 3;
+	}
+	if (score >= LEVEL9)
+	{
+		numOfEnemy1 = 3;
+		numOfEnemy2 = 3;
+		numOfEnemy3 = 3;
 	}
 }
 

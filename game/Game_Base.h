@@ -52,4 +52,15 @@ const int TOTAL_PARTICLES = 20;
 //Number of data integers
 const int TOTAL_DATA = 10;
 
+//Levels
+const int LEVEL1 = 5;
+const int LEVEL2 = 8;
+const int LEVEL3 = 13;
+const int LEVEL4 = 21;
+const int LEVEL5 = 34;
+const int LEVEL6 = 55;
+const int LEVEL7 = 89;
+const int LEVEL8 = 144;
+const int LEVEL9 = 233;
+const int LEVEL10 = 377;
 #endif

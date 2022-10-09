@@ -141,6 +141,7 @@ void Player::updateAttackCollider(const int& score)
             canUltimate = false;
             isUltimate = false;
             mTime.stop();
+            mHP = PLAYER_MAX_HP;
         }
     }
     else

@@ -1,3 +1,4 @@
 C:\Users\binh1\Desktop\Blood_Blade\game\x64\Debug\game.exe
 C:\Users\binh1\Desktop\Nháp\game\x64\Debug\game.exe
 C:\Users\binh1\Desktop\Blood_Blade_2\game\x64\Debug\game.exe
+C:\Users\Admin\Desktop\Github\Blood_Blade_2\game\x64\Debug\game.exe

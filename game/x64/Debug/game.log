@@ -1,1 +1,23 @@
-﻿  game.vcxproj -> C:\Users\binh1\Desktop\Blood_Blade_2\game\x64\Debug\game.exe
+﻿  Assassin.cpp
+  Enemy.cpp
+C:\Users\Admin\Desktop\Github\Blood_Blade_2\game\Enemy.cpp(150,22): warning C4244: '=': conversion from 'double' to 'int', possible loss of data
+C:\Users\Admin\Desktop\Github\Blood_Blade_2\game\Enemy.cpp(151,22): warning C4244: '=': conversion from 'double' to 'int', possible loss of data
+  Game_Base.cpp
+  Game_Utils.cpp
+  LTexture.cpp
+  Paladin.cpp
+C:\Users\Admin\Desktop\Github\Blood_Blade_2\game\Paladin.cpp(101,22): warning C4244: '=': conversion from 'double' to 'int', possible loss of data
+C:\Users\Admin\Desktop\Github\Blood_Blade_2\game\Paladin.cpp(102,22): warning C4244: '=': conversion from 'double' to 'int', possible loss of data
+  Particle.cpp
+  Player.cpp
+C:\Users\Admin\Desktop\Github\Blood_Blade_2\game\Player.cpp(4,1): warning C4005: 'M_PI': macro redefinition
+C:\vclib\SDL2-2.24.0\include\SDL_stdinc.h(619): message : see previous definition of 'M_PI'
+C:\Users\Admin\Desktop\Github\Blood_Blade_2\game\Player.cpp(122,22): warning C4244: '=': conversion from 'double' to 'int', possible loss of data
+C:\Users\Admin\Desktop\Github\Blood_Blade_2\game\Player.cpp(123,22): warning C4244: '=': conversion from 'double' to 'int', possible loss of data
+C:\Users\Admin\Desktop\Github\Blood_Blade_2\game\Player.cpp(275,37): warning C4244: 'argument': conversion from 'double' to 'Uint8', possible loss of data
+  Rogue.cpp
+  Tile.cpp
+  main.cpp
+C:\Users\Admin\Desktop\Github\Blood_Blade_2\game\main.cpp(72,12): warning C4244: 'argument': conversion from 'time_t' to 'unsigned int', possible loss of data
+  Generating Code...
+  game.vcxproj -> C:\Users\Admin\Desktop\Github\Blood_Blade_2\game\x64\Debug\game.exe
